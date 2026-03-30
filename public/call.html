@@ -134,27 +134,11 @@
             display: flex;
             flex-direction: column;
             height: 100%;
-            background: #0f0f18;
+            background: #000;
+            position: relative;
         }
 
-        .call-header {
-            padding: 20px;
-            text-align: center;
-            background: linear-gradient(to bottom, rgba(26, 26, 46, 0.8), transparent);
-            z-index: 10;
-        }
-
-        .call-name-header {
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .call-duration {
-            font-size: 14px;
-            color: #8b949e;
-            font-family: monospace;
-        }
-
+        /* Fullscreen remote video */
         .video-wrapper {
             flex: 1;
             position: relative;
@@ -168,21 +152,24 @@
             object-fit: cover;
         }
 
+        /* Local video floating window */
         .local-video {
             position: absolute;
             bottom: 20px;
             right: 20px;
-            width: 180px;
-            height: 120px;
+            width: 150px;
+            height: 100px;
             object-fit: cover;
-            border-radius: 16px;
+            border-radius: 12px;
             border: 2px solid #7a5cff;
             cursor: pointer;
             z-index: 20;
             background: #0f0f18;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
-        .audio-only-avatar {
+        /* Avatar when video is off */
+        .avatar-center {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -191,57 +178,77 @@
             height: 180px;
             background: linear-gradient(135deg, #7a5cff, #ff5ad6);
             border-radius: 50%;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             font-size: 72px;
+            z-index: 15;
         }
 
-        .voice-wave {
+        /* Overlay UI (name + controls) */
+        .call-overlay-ui {
             position: absolute;
-            bottom: 30%;
+            bottom: 0;
             left: 0;
             right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
+            padding: 30px 20px 40px;
             display: flex;
-            justify-content: center;
-            gap: 8px;
-            pointer-events: none;
-        }
-
-        .wave {
-            width: 4px;
-            height: 20px;
-            background: #7a5cff;
-            border-radius: 2px;
-            animation: wave 0.5s infinite ease alternate;
-        }
-
-        @keyframes wave {
-            0% {
-                height: 10px;
-            }
-            100% {
-                height: 40px;
-            }
-        }
-
-        /* ---------- CONTROLS PANEL ---------- */
-        .controls-panel {
-            background: #1a1a2e;
-            padding: 16px 20px;
-            display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
             gap: 20px;
-            flex-wrap: wrap;
-            border-top: 1px solid #7a5cff;
             transition: opacity 0.3s;
+            z-index: 10;
+        }
+
+        .caller-info {
+            text-align: center;
+        }
+
+        .caller-name-large {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .call-duration {
+            font-size: 14px;
+            color: #8b949e;
+            font-family: monospace;
+        }
+
+        /* Main end call button (big red phone) */
+        .main-end-call {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #ff5252;
+            border: none;
+            color: white;
+            font-size: 36px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .main-end-call:active {
+            transform: scale(0.94);
+        }
+
+        /* Row of secondary controls */
+        .secondary-controls {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
         }
 
         .control-icon {
             width: 56px;
             height: 56px;
             border-radius: 50%;
-            background: #2a2a3a;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
             border: none;
             color: white;
             font-size: 24px;
@@ -257,91 +264,25 @@
             background: #7a5cff;
         }
 
-        .control-icon.danger {
-            background: #ff5252;
-        }
-
         .control-icon.inactive {
+            background: rgba(255, 255, 255, 0.2);
             opacity: 0.6;
-            background: #3a3a4a;
         }
 
-        .controls-panel.auto-hide {
+        /* Auto-hide controls */
+        .call-overlay-ui.auto-hide {
             opacity: 0;
             pointer-events: none;
         }
 
-        /* ---------- GROUP GRID ---------- */
-        .group-grid {
-            display: grid;
-            gap: 8px;
-            padding: 8px;
-            height: 100%;
-            background: #0a0a12;
-        }
-
-        .grid-1 {
-            grid-template-columns: 1fr;
-        }
-
-        .grid-2 {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .grid-3,
-        .grid-4 {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .grid-5,
-        .grid-6,
-        .grid-7,
-        .grid-8,
-        .grid-9 {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
-        .grid-item {
-            position: relative;
-            background: #000;
-            border-radius: 16px;
-            overflow: hidden;
-            aspect-ratio: 16/9;
-        }
-
-        .grid-video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .grid-avatar {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #7a5cff, #ff5ad6);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-
-        .speaker-glow {
-            box-shadow: 0 0 0 2px #7a5cff, 0 0 0 5px rgba(122, 92, 255, 0.4);
-        }
-
-        /* ---------- FLOATING WINDOW ---------- */
+        /* Floating minimized window */
         .floating-call {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            width: 280px;
+            width: 260px;
             background: #1a1a2e;
-            border-radius: 24px;
+            border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
             z-index: 1000;
@@ -351,7 +292,7 @@
 
         .floating-video {
             width: 100%;
-            height: 160px;
+            height: 150px;
             object-fit: cover;
             background: #000;
         }
@@ -377,17 +318,17 @@
 
         .floating-controls {
             display: flex;
-            gap: 12px;
+            gap: 8px;
         }
 
         .floating-btn {
             background: none;
             border: none;
             color: white;
-            font-size: 18px;
+            font-size: 16px;
             cursor: pointer;
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
         }
 
@@ -395,7 +336,7 @@
             background: rgba(255, 255, 255, 0.2);
         }
 
-        /* ---------- SETTINGS PANEL ---------- */
+        /* Settings panel */
         .settings-panel {
             position: fixed;
             bottom: 100px;
@@ -429,7 +370,7 @@
             color: white;
         }
 
-        /* ---------- NOTIFICATION ---------- */
+        /* Notification */
         .notification-toast {
             position: fixed;
             bottom: 100px;
@@ -469,10 +410,16 @@
         }
 
         @media (max-width: 768px) {
+            .main-end-call {
+                width: 70px;
+                height: 70px;
+                font-size: 32px;
+            }
+
             .control-icon {
-                width: 48px;
-                height: 48px;
-                font-size: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 22px;
             }
 
             .local-video {
@@ -481,11 +428,11 @@
             }
 
             .floating-call {
-                width: 240px;
+                width: 220px;
             }
 
             .floating-video {
-                height: 135px;
+                height: 125px;
             }
         }
     </style>
@@ -512,13 +459,14 @@
     let usingFrontCamera = true;
     let floatingWindow = null;
     let controlsAutoHideTimeout = null;
-    let ringtone = null;
     let ringtoneInterval = null;
 
-    // DOM elements (will be set after rendering)
+    // DOM elements
     let remoteVideoEl = null;
     let localVideoEl = null;
     let durationSpan = null;
+    let callerNameSpan = null;
+    let avatarCenterEl = null;
 
     // Helper functions
     function showNotification(msg, isError = false) {
@@ -558,29 +506,17 @@
     }
 
     function playRingtone() {
-        if (ringtone) ringtone.pause();
-        // Create a simple beep using Web Audio (no external files)
         try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            oscillator.connect(gain);
-            gain.connect(audioCtx.destination);
-            oscillator.frequency.value = 440;
-            gain.gain.value = 0.3;
-            oscillator.start();
-            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
-            oscillator.stop(audioCtx.currentTime + 0.5);
             ringtoneInterval = setInterval(() => {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = ctx.createOscillator();
-                const g = ctx.createGain();
-                osc.connect(g);
-                g.connect(ctx.destination);
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
                 osc.frequency.value = 440;
-                g.gain.value = 0.3;
+                gain.gain.value = 0.3;
                 osc.start();
-                g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
+                gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
                 osc.stop(ctx.currentTime + 0.5);
             }, 1500);
         } catch (e) {
@@ -593,10 +529,6 @@
             clearInterval(ringtoneInterval);
             ringtoneInterval = null;
         }
-        if (ringtone) {
-            ringtone.pause();
-            ringtone = null;
-        }
     }
 
     function vibrate() {
@@ -604,14 +536,14 @@
     }
 
     // ========== MEDIA ==========
-    async function initLocalStream(isVideo) {
+    async function initLocalStream() {
         if (localStream) {
             localStream.getTracks().forEach(t => t.stop());
             localStream = null;
         }
         const constraints = {
             audio: true,
-            video: isVideo ? { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } } : false
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } }
         };
         try {
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -627,7 +559,7 @@
         }
     }
 
-    // ========== WEBRTC (1-1) ==========
+    // ========== WEBRTC ==========
     async function createPeerConnection(targetId) {
         const pc = new RTCPeerConnection({
             iceServers: [
@@ -646,10 +578,6 @@
         pc.ontrack = event => {
             remoteStream = event.streams[0];
             if (remoteVideoEl) remoteVideoEl.srcObject = remoteStream;
-            if (!callData?.isVideo) {
-                const avatar = document.querySelector('.audio-only-avatar');
-                if (avatar) avatar.style.display = 'flex';
-            }
             if (callState === 'connecting') {
                 callState = 'active';
                 startTimer();
@@ -658,9 +586,9 @@
         return pc;
     }
 
-    async function startCall(targetId, isVideo) {
+    async function startCall(targetId) {
         try {
-            await initLocalStream(isVideo);
+            await initLocalStream();
             peerConnection = await createPeerConnection(targetId);
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
@@ -673,7 +601,7 @@
 
     async function handleOffer(data) {
         if (!peerConnection) {
-            await initLocalStream(callData?.isVideo || false);
+            await initLocalStream();
             peerConnection = await createPeerConnection(data.from);
         }
         await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
@@ -761,7 +689,7 @@
     }
 
     function toggleVideo() {
-        if (!localStream || !callData?.isVideo) return;
+        if (!localStream) return;
         isVideoOff = !isVideoOff;
         localStream.getVideoTracks().forEach(t => (t.enabled = !isVideoOff));
         const btn = document.querySelector('#camBtn');
@@ -771,12 +699,10 @@
         }
         if (isVideoOff) {
             if (localVideoEl) localVideoEl.style.display = 'none';
-            const avatar = document.querySelector('.audio-only-avatar');
-            if (avatar) avatar.style.display = 'flex';
+            if (avatarCenterEl) avatarCenterEl.style.display = 'flex';
         } else {
             if (localVideoEl) localVideoEl.style.display = 'block';
-            const avatar = document.querySelector('.audio-only-avatar');
-            if (avatar) avatar.style.display = 'none';
+            if (avatarCenterEl) avatarCenterEl.style.display = 'none';
         }
         if (callData?.type === 'personal' && callData.targetId) {
             socket.emit('call:video', { targetId: callData.targetId, enabled: !isVideoOff });
@@ -784,7 +710,7 @@
     }
 
     async function switchCamera() {
-        if (!localStream || !callData?.isVideo) return;
+        if (!localStream) return;
         try {
             const newStream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: usingFrontCamera ? 'environment' : 'user' },
@@ -803,12 +729,6 @@
             usingFrontCamera = !usingFrontCamera;
         } catch (err) {
             showNotification('Не удалось переключить камеру', true);
-        }
-    }
-
-    function toggleSpeaker() {
-        if (remoteVideoEl && remoteVideoEl.setSinkId) {
-            // placeholder
         }
     }
 
@@ -916,72 +836,58 @@
     }
 
     function showActiveUI() {
-        const isVideo = callData?.isVideo;
         const root = document.getElementById('callRoot');
         root.innerHTML = `
             <div class="active-call-container">
-                <div class="call-header">
-                    <div class="call-name-header">${escapeHtml(callData.targetName)}</div>
-                    <div class="call-duration">00:00</div>
-                </div>
                 <div class="video-wrapper">
                     <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
                     <video id="localVideo" class="local-video" autoplay playsinline muted></video>
-                    <div id="audioAvatar" class="audio-only-avatar" style="display: none;"></div>
-                    <div id="voiceWaves" class="voice-wave" style="display: none;"></div>
+                    <div id="avatarCenter" class="avatar-center">${callData.targetName[0].toUpperCase()}</div>
                 </div>
-                <div class="controls-panel" id="controlsPanel">
-                    <button class="control-icon" id="micBtn">🎤</button>
-                    <button class="control-icon" id="camBtn">📹</button>
-                    <button class="control-icon danger" id="endCallBtn">📞</button>
-                    <button class="control-icon" id="speakerBtn">🔊</button>
-                    <button class="control-icon" id="switchCamBtn">🔄</button>
-                    <button class="control-icon" id="screenShareBtn">🖥️</button>
-                    <button class="control-icon" id="fullscreenBtn">⤢</button>
-                    <button class="control-icon" id="minimizeBtn">🗗</button>
-                    <button class="control-icon" id="settingsBtn">⚙️</button>
+                <div class="call-overlay-ui" id="callOverlayUI">
+                    <div class="caller-info">
+                        <div class="caller-name-large" id="callerName">${escapeHtml(callData.targetName)}</div>
+                        <div class="call-duration" id="callDuration">00:00</div>
+                    </div>
+                    <button class="main-end-call" id="endCallMainBtn">📞</button>
+                    <div class="secondary-controls">
+                        <button class="control-icon" id="camBtn">📹</button>
+                        <button class="control-icon" id="micBtn">🎤</button>
+                        <button class="control-icon" id="screenShareBtn">🖥️</button>
+                        <button class="control-icon" id="switchCamBtn">🔄</button>
+                        <button class="control-icon" id="fullscreenBtn">⤢</button>
+                        <button class="control-icon" id="minimizeBtn">🗗</button>
+                        <button class="control-icon" id="settingsBtn">⚙️</button>
+                    </div>
                 </div>
             </div>
         `;
         remoteVideoEl = document.getElementById('remoteVideo');
         localVideoEl = document.getElementById('localVideo');
-        durationSpan = document.querySelector('.call-duration');
-
-        if (!isVideo) {
-            const avatar = document.getElementById('audioAvatar');
-            avatar.style.display = 'flex';
-            avatar.innerText = callData.targetName[0].toUpperCase();
-            const waves = document.getElementById('voiceWaves');
-            for (let i = 0; i < 5; i++) {
-                const w = document.createElement('div');
-                w.className = 'wave';
-                waves.appendChild(w);
-            }
-            waves.style.display = 'flex';
-            localVideoEl.style.display = 'none';
-        }
+        avatarCenterEl = document.getElementById('avatarCenter');
+        durationSpan = document.getElementById('callDuration');
+        callerNameSpan = document.getElementById('callerName');
 
         // Bind buttons
-        document.getElementById('micBtn').onclick = toggleMute;
+        document.getElementById('endCallMainBtn').onclick = endCall;
         document.getElementById('camBtn').onclick = toggleVideo;
-        document.getElementById('endCallBtn').onclick = endCall;
-        document.getElementById('speakerBtn').onclick = toggleSpeaker;
-        document.getElementById('switchCamBtn').onclick = switchCamera;
+        document.getElementById('micBtn').onclick = toggleMute;
         document.getElementById('screenShareBtn').onclick = toggleScreenShare;
+        document.getElementById('switchCamBtn').onclick = switchCamera;
         document.getElementById('fullscreenBtn').onclick = toggleFullscreen;
         document.getElementById('minimizeBtn').onclick = minimizeCall;
         document.getElementById('settingsBtn').onclick = () => toggleSettings();
 
         // Auto-hide controls
-        const panel = document.querySelector('.controls-panel');
+        const overlayUI = document.getElementById('callOverlayUI');
         function resetAutoHide() {
             if (controlsAutoHideTimeout) clearTimeout(controlsAutoHideTimeout);
-            panel.classList.remove('auto-hide');
+            overlayUI.classList.remove('auto-hide');
             controlsAutoHideTimeout = setTimeout(() => {
-                if (callState === 'active') panel.classList.add('auto-hide');
+                if (callState === 'active') overlayUI.classList.add('auto-hide');
             }, 3000);
         }
-        panel.addEventListener('mousemove', resetAutoHide);
+        overlayUI.addEventListener('mousemove', resetAutoHide);
         resetAutoHide();
 
         // Double-click to fullscreen
@@ -1023,14 +929,14 @@
         if (outSelect) outSelect.innerHTML = audioOut.map(d => `<option value="${d.deviceId}">${d.label || 'Динамики'}</option>`).join('');
     }
 
-    function showIncomingScreen(callerName, isVideo) {
+    function showIncomingScreen(callerName) {
         const overlay = document.createElement('div');
         overlay.className = 'call-overlay';
         overlay.innerHTML = `
             <div class="incoming-card">
                 <div class="avatar-large">${callerName[0].toUpperCase()}</div>
                 <div class="caller-name">${escapeHtml(callerName)}</div>
-                <div class="call-status-text">${isVideo ? 'Видеозвонок' : 'Аудиозвонок'}</div>
+                <div class="call-status-text">Видеозвонок</div>
                 <div class="call-buttons">
                     <button class="call-btn accept-btn" id="acceptCallBtn">📞</button>
                     <button class="call-btn decline-btn" id="declineCallBtn">✖</button>
@@ -1047,7 +953,7 @@
             socket.emit('call:accept', { fromId: callData.targetId });
             showActiveUI();
             try {
-                await initLocalStream(callData.isVideo);
+                await initLocalStream();
                 // peer will be created after offer arrives
             } catch (err) {
                 endCall();
@@ -1061,7 +967,7 @@
         };
     }
 
-    function showOutgoingScreen(targetName, isVideo) {
+    function showOutgoingScreen(targetName) {
         const overlay = document.createElement('div');
         overlay.className = 'call-overlay';
         overlay.innerHTML = `
@@ -1118,13 +1024,12 @@
 
         if (callData.type === 'personal') {
             if (callData.isIncoming) {
-                showIncomingScreen(callData.targetName, callData.isVideo);
+                showIncomingScreen(callData.targetName);
             } else {
-                showOutgoingScreen(callData.targetName, callData.isVideo);
-                startCall(callData.targetId, callData.isVideo);
+                showOutgoingScreen(callData.targetName);
+                startCall(callData.targetId);
             }
         } else {
-            // group call placeholder – not fully implemented in this version
             showNotification('Групповые звонки в разработке', true);
             window.close();
         }
