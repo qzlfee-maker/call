@@ -26,8 +26,8 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            transition: opacity 0.2s;
             background: #0a0a0a;
+            transition: opacity 0.2s;
         }
 
         /* Свёрнутый режим (плавающее окно) */
@@ -135,7 +135,7 @@
             cursor: pointer;
         }
 
-        /* Видео-область */
+        /* Видео-область (для видео звонков) */
         .video-container {
             flex: 1;
             position: relative;
@@ -166,6 +166,40 @@
             background: #0f0f1a;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             transition: all 0.2s;
+        }
+
+        /* Аудио-интерфейс (когда нет видео) */
+        .audio-interface {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
+        }
+
+        .audio-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #2ea6ff, #0088cc);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .audio-name {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .audio-status {
+            font-size: 14px;
+            color: #8b949e;
         }
 
         /* Кнопки управления */
@@ -441,6 +475,16 @@
                 bottom: 10px;
                 right: 10px;
             }
+
+            .audio-avatar {
+                width: 100px;
+                height: 100px;
+                font-size: 40px;
+            }
+
+            .audio-name {
+                font-size: 24px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -461,6 +505,16 @@
 
             .call-name {
                 font-size: 16px;
+            }
+
+            .audio-avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 32px;
+            }
+
+            .audio-name {
+                font-size: 20px;
             }
         }
 
@@ -492,14 +546,21 @@
         </div>
     </div>
 
-    <div class="video-container" id="videoContainer">
+    <!-- Динамическая область: для видео или аудио -->
+    <div id="mediaArea" class="video-container" style="display: none;">
         <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
         <video id="localVideo" class="local-video" autoplay playsinline muted></video>
         <button class="fullscreen-btn" id="fullscreenBtn" title="Полный экран">⤢</button>
     </div>
+    <div id="audioArea" class="audio-interface" style="display: none;">
+        <div class="audio-avatar" id="audioAvatar">👤</div>
+        <div class="audio-name" id="audioName">Имя</div>
+        <div class="audio-status" id="audioStatus">Соединение...</div>
+    </div>
 
     <div class="controls" id="mainControls">
         <button class="control-btn" id="toggleMuteBtn">🎤</button>
+        <button class="control-btn" id="toggleSpeakerBtn" style="display: none;">🔊</button>
         <button class="control-btn" id="toggleVideoBtn">📹</button>
         <button class="control-btn" id="switchCameraBtn">🔄</button>
         <button class="control-btn end-call" id="endCallBtn">📞</button>
@@ -571,7 +632,13 @@
     const callTimerEl = document.getElementById('callTimer');
     const remoteVideo = document.getElementById('remoteVideo');
     const localVideo = document.getElementById('localVideo');
+    const mediaArea = document.getElementById('mediaArea');
+    const audioArea = document.getElementById('audioArea');
+    const audioAvatar = document.getElementById('audioAvatar');
+    const audioName = document.getElementById('audioName');
+    const audioStatus = document.getElementById('audioStatus');
     const toggleMuteBtn = document.getElementById('toggleMuteBtn');
+    const toggleSpeakerBtn = document.getElementById('toggleSpeakerBtn');
     const toggleVideoBtn = document.getElementById('toggleVideoBtn');
     const switchCameraBtn = document.getElementById('switchCameraBtn');
     const endCallBtn = document.getElementById('endCallBtn');
@@ -616,27 +683,47 @@
         return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
     }
 
+    // Переключение между видео и аудио интерфейсом
+    function setCallInterface(isVideoCall) {
+        if (isVideoCall) {
+            mediaArea.style.display = 'flex';
+            audioArea.style.display = 'none';
+            toggleVideoBtn.style.display = 'flex';
+            switchCameraBtn.style.display = 'flex';
+        } else {
+            mediaArea.style.display = 'none';
+            audioArea.style.display = 'flex';
+            toggleVideoBtn.style.display = 'none';
+            switchCameraBtn.style.display = 'none';
+            // Обновляем аудио-аватар
+            if (callData) {
+                audioAvatar.textContent = callData.type === 'personal' ? callData.targetName[0].toUpperCase() : '👥';
+                audioName.textContent = callData.type === 'personal' ? callData.targetName : callData.groupName;
+            }
+        }
+    }
+
     // ========== СВЁРТЫВАНИЕ / РАЗВЁРТЫВАНИЕ ==========
     function minimizeCall() {
         if (isMinimized) return;
         isMinimized = true;
-        // Копируем видеопоток в плавающее окно
+        // Копируем видеопоток в плавающее окно (если есть видео)
         if (remoteVideo.srcObject) {
             floatingVideo.srcObject = remoteVideo.srcObject;
         } else if (localStream && !remoteVideo.srcObject) {
-            // Если нет удалённого видео, показываем локальное
             floatingVideo.srcObject = localStream;
+        } else {
+            // Если нет видео, показываем заглушку
+            floatingVideo.style.background = '#1a1a2e';
         }
         callContainer.classList.add('hidden');
         floatingWindow.classList.remove('hidden');
-        // Сохраняем состояние звонка в localStorage, чтобы после развёртывания всё восстановилось
         localStorage.setItem('minimizedCall', 'true');
     }
 
     function expandCall() {
         if (!isMinimized) return;
         isMinimized = false;
-        // Восстанавливаем видео
         if (floatingVideo.srcObject) {
             remoteVideo.srcObject = floatingVideo.srcObject;
             floatingVideo.srcObject = null;
@@ -701,6 +788,8 @@
             raiseHandBtn.style.display = 'none';
             chatBtn.style.display = 'none';
             participantsBtn.style.display = 'none';
+            // Устанавливаем аудио-интерфейс
+            setCallInterface(callData.callType === 'video');
         } else {
             callNameEl.textContent = `Группа: ${callData.groupName}`;
             callStatusEl.textContent = 'Подключение...';
@@ -709,6 +798,7 @@
             raiseHandBtn.style.display = 'block';
             chatBtn.style.display = 'block';
             participantsBtn.style.display = 'block';
+            setCallInterface(true); // групповые звонки всегда с видео (можно и без, но оставим)
         }
 
         socket = io({ transports: ['websocket', 'polling'] });
@@ -718,7 +808,6 @@
         });
         setupSocketListeners();
 
-        // Проверка, был ли свёрнут звонок (при перезагрузке)
         if (localStorage.getItem('minimizedCall') === 'true') {
             setTimeout(() => minimizeCall(), 500);
         }
@@ -796,11 +885,12 @@
     // ========== ЛИЧНЫЙ ЗВОНОК ==========
     async function startPersonalCall(isAnswering) {
         try {
+            const isVideo = callData.callType === 'video';
             const constraints = {
-                video: callData.callType === 'video',
+                video: isVideo,
                 audio: true
             };
-            if (constraints.video) {
+            if (isVideo) {
                 constraints.video = {
                     width: { ideal: 1280 },
                     height: { ideal: 720 },
@@ -808,7 +898,12 @@
                 };
             }
             localStream = await navigator.mediaDevices.getUserMedia(constraints);
-            localVideo.srcObject = localStream;
+            if (isVideo) {
+                localVideo.srcObject = localStream;
+            } else {
+                // Для аудио звонка не показываем локальное видео, но поток нужен
+                localVideo.srcObject = null;
+            }
             const config = {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
@@ -831,18 +926,24 @@
             peerConnection.ontrack = event => {
                 if (event.streams[0]) {
                     remoteVideo.srcObject = event.streams[0];
+                    if (!isVideo) {
+                        // Для аудио звонка показываем аудио-интерфейс, но удалённый поток всё равно получаем
+                        audioStatus.textContent = 'В процессе';
+                    }
                 }
             };
             if (isAnswering) {
                 callStatusEl.textContent = 'Соединение...';
+                if (!isVideo) audioStatus.textContent = 'Соединение...';
             } else {
                 const offer = await peerConnection.createOffer({
                     offerToReceiveAudio: true,
-                    offerToReceiveVideo: true
+                    offerToReceiveVideo: isVideo
                 });
                 await peerConnection.setLocalDescription(offer);
                 socket.emit('offer', { targetId: callData.targetId, offer });
                 callStatusEl.textContent = 'Вызов...';
+                if (!isVideo) audioStatus.textContent = 'Вызов...';
             }
             startTimer();
         } catch (err) {
@@ -854,6 +955,7 @@
 
     async function handleOffer(data) {
         try {
+            const isVideo = callData.callType === 'video';
             if (!peerConnection) {
                 const config = {
                     iceServers: [
@@ -876,6 +978,7 @@
                 peerConnection.ontrack = event => {
                     if (event.streams[0]) {
                         remoteVideo.srcObject = event.streams[0];
+                        if (!isVideo) audioStatus.textContent = 'В процессе';
                     }
                 };
             }
@@ -885,6 +988,7 @@
             socket.emit('answer', { targetId: data.from, answer });
             startTimer();
             callStatusEl.textContent = 'В процессе';
+            if (!isVideo) audioStatus.textContent = 'В процессе';
         } catch (err) {
             console.error('Offer error', err);
         }
@@ -894,6 +998,7 @@
         if (peerConnection) {
             await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
             callStatusEl.textContent = 'В процессе';
+            if (callData.callType !== 'video') audioStatus.textContent = 'В процессе';
         }
     }
 
@@ -1062,6 +1167,16 @@
             videoOff = !videoOff;
             localStream.getVideoTracks().forEach(track => (track.enabled = !videoOff));
             toggleVideoBtn.style.opacity = videoOff ? '0.5' : '1';
+            if (videoOff) {
+                // Если видео выключено, показываем аудио-интерфейс
+                mediaArea.style.display = 'none';
+                audioArea.style.display = 'flex';
+                audioAvatar.textContent = callData.type === 'personal' ? callData.targetName[0].toUpperCase() : '👥';
+                audioName.textContent = callData.type === 'personal' ? callData.targetName : callData.groupName;
+            } else {
+                mediaArea.style.display = 'flex';
+                audioArea.style.display = 'none';
+            }
         }
     };
 
