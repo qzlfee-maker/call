@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Craheapp Messenger</title>
+    <title>Craheapp Messenger — Premium</title>
     <script src="/socket.io/socket.io.js"></script>
     <style>
         :root {
@@ -15,8 +15,10 @@
             --tg-text: #ffffff;
             --tg-text-muted: #708499;
             --tg-sent-msg: #2b5278;
+            --tg-received-msg: #182533;
             --tg-border: #111923;
             --tg-green: #4cd964;
+            --safe-top: env(safe-area-inset-top);
         }
 
         * {
@@ -35,12 +37,12 @@
             overflow: hidden;
         }
 
-        /* --- AUTH SCREEN --- */
+        /* ========== AUTH SCREEN (ROBLOX STYLE) ========== */
         #auth-overlay {
             position: fixed;
             inset: 0;
-            background: radial-gradient(circle at center, #1a2a3a, #0f1721);
-            z-index: 1000;
+            background: linear-gradient(135deg, #1c2c3e 0%, #0f1721 100%);
+            z-index: 2000;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -49,126 +51,160 @@
 
         .auth-card {
             background: var(--tg-sidebar);
-            padding: 40px 30px;
-            border-radius: 24px;
+            padding: 40px;
+            border-radius: 28px;
             width: 100%;
-            max-width: 380px;
+            max-width: 400px;
             text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
             border: 1px solid rgba(255,255,255,0.05);
         }
 
         .auth-logo {
-            width: 80px;
-            height: 80px;
-            background: var(--tg-blue);
-            border-radius: 22px;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            box-shadow: 0 10px 20px rgba(36, 139, 207, 0.3);
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--tg-blue);
+            margin-bottom: 10px;
+            letter-spacing: -2px;
         }
 
-        .auth-card h2 { margin-bottom: 10px; font-size: 24px; }
+        .auth-card h2 { font-size: 24px; margin-bottom: 8px; }
         .auth-card p { color: var(--tg-text-muted); margin-bottom: 30px; font-size: 15px; }
 
-        input.tg-input {
-            width: 100%;
-            padding: 16px;
-            border-radius: 12px;
-            border: 1px solid var(--tg-border);
+        .auth-tabs {
+            display: flex;
             background: var(--tg-bg);
-            color: white;
-            margin-bottom: 20px;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.3s;
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 25px;
         }
 
-        input.tg-input:focus { border-color: var(--tg-blue); }
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
 
-        .btn-tg {
+        .auth-tab.active { background: var(--tg-blue); color: white; }
+
+        .input-group { text-align: left; margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 13px; color: var(--tg-text-muted); margin-bottom: 6px; margin-left: 4px; }
+        
+        .tg-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 2px solid var(--tg-border);
+            background: var(--tg-bg);
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .tg-input:focus { border-color: var(--tg-blue); }
+
+        .btn-primary {
             width: 100%;
             padding: 16px;
             background: var(--tg-blue);
             color: white;
             border: none;
             border-radius: 12px;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 16px;
             cursor: pointer;
-            transition: filter 0.2s;
+            margin-top: 10px;
+            transition: transform 0.2s, filter 0.2s;
         }
 
-        .btn-tg:hover { filter: brightness(1.1); }
+        .btn-primary:active { transform: scale(0.98); }
 
-        /* --- MAIN APP --- */
-        .app-container {
+        /* ========== MAIN MESSENGER UI ========== */
+        .app-layout {
             display: flex;
             width: 100%;
             height: 100%;
-            position: relative;
         }
 
+        /* Sidebar */
         .sidebar {
-            width: 380px;
+            width: 400px;
             background: var(--tg-sidebar);
             border-right: 1px solid var(--tg-border);
             display: flex;
             flex-direction: column;
-            z-index: 100;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.3s ease;
         }
 
         .sidebar-header {
-            padding: 20px 15px;
+            padding: 20px 16px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 12px;
         }
 
-        .search-container {
-            padding: 0 15px 15px;
+        .my-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--tg-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
         }
 
-        .search-box {
+        .search-bar {
+            padding: 0 16px 16px;
+        }
+
+        .search-input-wrap {
             background: var(--tg-bg);
-            border-radius: 10px;
-            padding: 10px 15px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
+            padding: 10px 14px;
             gap: 10px;
         }
 
-        .search-box input {
+        .search-input-wrap input {
             background: transparent;
             border: none;
             color: white;
-            font-size: 14px;
-            width: 100%;
             outline: none;
+            width: 100%;
+            font-size: 15px;
         }
 
-        .user-list {
+        .contact-list {
             flex: 1;
             overflow-y: auto;
         }
 
-        .user-item {
-            padding: 12px 15px;
+        .contact-item {
+            padding: 12px 16px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 14px;
             cursor: pointer;
             transition: background 0.2s;
         }
 
-        .user-item:hover { background: var(--tg-hover); }
-        .user-item.active { background: var(--tg-blue); }
+        .contact-item:hover { background: var(--tg-hover); }
+        .contact-item.active { background: var(--tg-blue); }
 
-        .avatar {
+        .avatar-wrap {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .avatar-main {
             width: 54px;
             height: 54px;
             border-radius: 50%;
@@ -176,13 +212,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 600;
             font-size: 20px;
-            flex-shrink: 0;
-            position: relative;
+            font-weight: 600;
         }
 
-        .online-badge {
+        .online-status {
             position: absolute;
             bottom: 2px;
             right: 2px;
@@ -193,365 +227,198 @@
             border-radius: 50%;
         }
 
-        .user-info-col {
-            flex: 1;
-            overflow: hidden;
-        }
+        .contact-info { flex: 1; min-width: 0; }
+        .contact-name-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .contact-name-row h4 { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .contact-time { font-size: 12px; color: var(--tg-text-muted); }
+        .contact-last-msg { font-size: 14px; color: var(--tg-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .user-info-col h4 {
-            font-size: 16px;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .last-msg {
-            font-size: 14px;
-            color: var(--tg-text-muted);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* --- CHAT SECTION --- */
-        .chat-area {
+        /* Chat Window */
+        .chat-window {
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: var(--tg-chat-bg);
+            background-color: var(--tg-chat-bg);
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-size: 400px;
             position: relative;
         }
 
         .chat-header {
-            height: 64px;
+            height: 60px;
             background: var(--tg-sidebar);
+            border-bottom: 1px solid var(--tg-border);
             display: flex;
             align-items: center;
-            justify-content: space-between;
             padding: 0 20px;
-            border-bottom: 1px solid var(--tg-border);
+            justify-content: space-between;
             z-index: 10;
         }
 
-        .header-left { display: flex; align-items: center; gap: 15px; }
-        
-        .back-icon {
-            display: none;
-            cursor: pointer;
-            padding: 5px;
-        }
+        .chat-peer-info { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .chat-peer-name { font-weight: 600; font-size: 16px; }
+        .chat-peer-status { font-size: 13px; color: var(--tg-blue); }
 
-        .chat-body {
+        .chat-actions { display: flex; gap: 15px; }
+        .icon-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--tg-text-muted);
+            padding: 8px;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+        .icon-btn:hover { background: var(--tg-hover); color: white; }
+        .icon-btn svg { width: 24px; height: 24px; fill: currentColor; }
+
+        .messages-container {
             flex: 1;
-            padding: 20px;
             overflow-y: auto;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-size: 400px;
+            gap: 4px;
         }
 
-        .msg {
-            max-width: 75%;
-            padding: 10px 14px;
-            border-radius: 16px;
+        /* Message Bubbles */
+        .message {
+            max-width: 70%;
+            padding: 8px 12px 6px;
+            border-radius: 15px;
             font-size: 15px;
-            line-height: 1.4;
             position: relative;
+            line-height: 1.4;
             word-wrap: break-word;
-        }
-
-        .msg-received {
-            align-self: flex-start;
-            background: var(--tg-sidebar);
-            border-bottom-left-radius: 4px;
         }
 
         .msg-sent {
             align-self: flex-end;
             background: var(--tg-sent-msg);
             border-bottom-right-radius: 4px;
+            color: white;
         }
 
-        .chat-input-bar {
-            padding: 10px 20px calc(10px + var(--safe-bottom));
+        .msg-received {
+            align-self: flex-start;
+            background: var(--tg-received-msg);
+            border-bottom-left-radius: 4px;
+        }
+
+        .msg-time {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-left: 8px;
+            float: right;
+            margin-top: 4px;
+        }
+
+        /* Input Area */
+        .input-area {
             background: var(--tg-sidebar);
+            padding: 10px 15px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
         }
 
-        .msg-input-field {
+        .message-input {
             flex: 1;
             background: transparent;
             border: none;
             color: white;
             font-size: 16px;
             outline: none;
-            padding: 10px 0;
+            max-height: 150px;
+            padding: 5px 0;
         }
 
-        .action-btn {
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: background 0.2s;
-        }
-
-        .action-btn:hover { background: rgba(255,255,255,0.05); }
-        .action-btn svg { fill: var(--tg-text-muted); width: 24px; height: 24px; }
-        .btn-send svg { fill: var(--tg-blue); }
-
-        /* --- MOBILE --- */
-        @media (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                inset: 0;
-                width: 100%;
-            }
-            .sidebar.shifted { transform: translateX(-100%); }
-            .back-icon { display: block; }
+        /* Mobile Adjustments */
+        @media (max-width: 850px) {
+            .sidebar { width: 100%; position: absolute; z-index: 100; }
+            .sidebar.hidden { transform: translateX(-100%); }
+            .chat-window { width: 100%; }
         }
 
         .hidden { display: none !important; }
-        .empty-placeholder {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--tg-text-muted);
-            font-size: 15px;
-        }
     </style>
 </head>
 <body>
 
     <div id="auth-overlay">
         <div class="auth-card">
-            <div class="auth-logo">C</div>
-            <h2>Craheapp</h2>
-            <p>Ваш новый уровень общения</p>
-            <input type="text" id="reg-name" class="tg-input" placeholder="Введите имя...">
-            <button class="btn-tg" onclick="handleLogin()">Начать общение</button>
+            <div class="auth-logo">CRAHEAPP</div>
+            <h2>Добро пожаловать</h2>
+            <p>Войдите, чтобы начать общение</p>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="tab-login" onclick="setAuthMode('login')">Вход</div>
+                <div class="auth-tab" id="tab-reg" onclick="setAuthMode('reg')">Регистрация</div>
+            </div>
+
+            <div class="input-group">
+                <label>Имя пользователя</label>
+                <input type="text" id="auth-username" class="tg-input" placeholder="Напр: crahe_dev">
+            </div>
+
+            <div class="input-group">
+                <label>Пароль</label>
+                <input type="password" id="auth-password" class="tg-input" placeholder="••••••••">
+            </div>
+
+            <button class="btn-primary" onclick="processAuth()" id="auth-submit-btn">Войти</button>
         </div>
     </div>
 
-    <div class="app-container">
-        <aside class="sidebar" id="app-sidebar">
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h3>Чаты</h3>
-                <div class="action-btn" onclick="logout()">
-                   <svg viewBox="0 0 24 24"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
-                </div>
+                <div class="my-avatar" id="my-avatar-display">?</div>
+                <h3 id="my-name-display">Загрузка...</h3>
             </div>
-            <div class="search-container">
-                <div class="search-box">
+            <div class="search-bar">
+                <div class="search-input-wrap">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--tg-text-muted)"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                    <input type="text" placeholder="Поиск контактов...">
+                    <input type="text" placeholder="Поиск">
                 </div>
             </div>
-            <div class="user-list" id="users-container">
+            <div class="contact-list" id="contact-list">
                 </div>
         </aside>
 
-        <main class="chat-area">
-            <div id="chat-idle" class="empty-placeholder">
-                <span>Выберите чат, чтобы начать переписку</span>
+        <main class="chat-window" id="chat-window">
+            <div id="no-chat-selected" style="flex:1; display:flex; align-items:center; justify-content:center; color: var(--tg-text-muted);">
+                Выберите чат, чтобы начать общение
             </div>
 
-            <div id="chat-active" class="hidden" style="height: 100%; display: none; flex-direction: column;">
+            <div id="chat-active-ui" class="hidden" style="height:100%; display:flex; flex-direction:column;">
                 <header class="chat-header">
-                    <div class="header-left">
-                        <div class="back-icon" onclick="goBack()">
-                            <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-                        </div>
-                        <div class="avatar" id="chat-title-avatar" style="width: 42px; height: 42px; font-size: 16px;"></div>
+                    <div class="chat-peer-info">
+                        <div class="avatar-main" id="chat-header-avatar" style="width:40px; height:40px; font-size:16px;">?</div>
                         <div>
-                            <div id="chat-title-name" style="font-weight: 600; font-size: 16px;"></div>
-                            <div id="chat-title-status" class="last-msg" style="color: var(--tg-blue);">в сети</div>
+                            <div class="chat-peer-name" id="chat-header-name">Имя</div>
+                            <div class="chat-peer-status" id="chat-header-status">в сети</div>
                         </div>
                     </div>
-                    <div class="header-right">
-                        <button class="action-btn" onclick="startVoiceCall()">
+                    <div class="chat-actions">
+                        <button class="icon-btn" onclick="initiateCall()">
                             <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
                         </button>
                     </div>
                 </header>
 
-                <div class="chat-body" id="messages-list">
+                <div class="messages-container" id="messages-container">
                     </div>
 
-                <div class="chat-input-bar">
-                    <button class="action-btn">
+                <div class="input-area">
+                    <button class="icon-btn">
                         <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4s-4 1.79-4 4v12.5c0 3.31 2.69 6 6 6s6-2.69 6-6V6h-1.5z"/></svg>
                     </button>
-                    <input type="text" id="main-input" class="msg-input-field" placeholder="Сообщение...">
-                    <button class="action-btn btn-send" onclick="sendTextMessage()">
+                    <input type="text" id="msg-input" class="message-input" placeholder="Напишите сообщение...">
+                    <button class="icon-btn" style="color: var(--tg-blue)" onclick="sendMessage()">
                         <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                     </button>
                 </div>
             </div>
         </main>
     </div>
-
-    <script>
-        const socket = io();
-        let me = JSON.parse(localStorage.getItem('craheapp_user')) || null;
-        let selectedUser = null;
-
-        // Авторизация
-        function handleLogin() {
-            const name = document.getElementById('reg-name').value.trim();
-            if (!name) return;
-
-            me = {
-                id: 'id_' + Math.random().toString(36).substr(2, 9),
-                name: name
-            };
-
-            localStorage.setItem('craheapp_user', JSON.stringify(me));
-            document.getElementById('auth-overlay').classList.add('hidden');
-            startApp();
-        }
-
-        function logout() {
-            localStorage.clear();
-            location.reload();
-        }
-
-        // Запуск
-        if (me) {
-            document.getElementById('auth-overlay').classList.add('hidden');
-            startApp();
-        }
-
-        function startApp() {
-            // Обязательная регистрация на сервере
-            socket.emit('call:register', { userId: me.id, username: me.name });
-            socket.emit('get-users');
-        }
-
-        // Получение списка пользователей
-        socket.on('user-list', (users) => {
-            const container = document.getElementById('users-container');
-            container.innerHTML = '';
-
-            users.forEach(u => {
-                if (u.userId === me.id) return;
-
-                const div = document.createElement('div');
-                div.className = 'user-item';
-                div.innerHTML = `
-                    <div class="avatar">${u.username[0].toUpperCase()}<div class="online-badge"></div></div>
-                    <div class="user-info-col">
-                        <h4>${u.username}</h4>
-                        <p class="last-msg">Нажмите, чтобы написать...</p>
-                    </div>
-                `;
-                div.onclick = () => selectChat(u);
-                container.appendChild(div);
-            });
-        });
-
-        function selectChat(user) {
-            selectedUser = user;
-            document.getElementById('chat-idle').classList.add('hidden');
-            const active = document.getElementById('chat-active');
-            active.style.display = 'flex';
-            active.classList.remove('hidden');
-
-            document.getElementById('chat-title-name').innerText = user.username;
-            document.getElementById('chat-title-avatar').innerText = user.username[0].toUpperCase();
-            document.getElementById('messages-list').innerHTML = '';
-
-            if (window.innerWidth <= 768) {
-                document.getElementById('app-sidebar').classList.add('shifted');
-            }
-        }
-
-        function goBack() {
-            document.getElementById('app-sidebar').classList.remove('shifted');
-        }
-
-        // ТЕКСТОВЫЕ СООБЩЕНИЯ (ФИКС)
-        function sendTextMessage() {
-            const input = document.getElementById('main-input');
-            const text = input.value.trim();
-            if (!text || !selectedUser) return;
-
-            // 1. Отображаем у себя
-            appendMessage(text, 'sent');
-            
-            // 2. Шлем через сервер
-            socket.emit('chat:message', {
-                to: selectedUser.userId,
-                text: text,
-                fromName: me.name
-            });
-
-            input.value = '';
-        }
-
-        socket.on('chat:message', (data) => {
-            // Если пришло сообщение от того, с кем открыт чат
-            if (selectedUser && data.fromId === selectedUser.userId) {
-                appendMessage(data.text, 'received');
-            } else {
-                // Если чат с ним не открыт - можно показать уведомление
-                console.log("Новое сообщение от " + data.fromName);
-            }
-        });
-
-        function appendMessage(text, type) {
-            const list = document.getElementById('messages-list');
-            const div = document.createElement('div');
-            div.className = `msg msg-${type}`;
-            div.innerText = text;
-            list.appendChild(div);
-            list.scrollTop = list.scrollHeight;
-        }
-
-        // ЗВОНКИ (ФИКС СОЕДИНЕНИЯ)
-        function startVoiceCall() {
-            if (!selectedUser) return;
-
-            // Сохраняем данные для call.html
-            const callObj = {
-                type: 'private',
-                targetUserId: selectedUser.userId,
-                targetUsername: selectedUser.username,
-                isIncoming: false
-            };
-
-            localStorage.setItem('craheapp_call', JSON.stringify(callObj));
-            
-            // Открываем окно звонка
-            window.open('/call.html', 'callWindow', 'width=400,height=700');
-        }
-
-        // Входящий звонок
-        socket.on('call:request', (data) => {
-            const callObj = {
-                type: 'private',
-                fromUserId: data.from,
-                fromUsername: data.fromName,
-                isIncoming: true
-            };
-            localStorage.setItem('craheapp_call', JSON.stringify(callObj));
-            window.open('/call.html', 'callWindow', 'width=400,height=700');
-        });
-
-        // Отправка по Enter
-        document.getElementById('main-input').onkeypress = (e) => {
-            if (e.key === 'Enter') sendTextMessage();
-        }
-    </script>
-</body>
-</html>
