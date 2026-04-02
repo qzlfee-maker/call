@@ -1,60 +1,61 @@
 {
-  "stickerPacks": [
-    {
-      "id": "welcome",
-      "title": "Welcome Pack",
-      "author": "CraneApp Team",
-      "emoji": "🎉",
-      "stickers": [
-        "/assets/stickers/welcome-1.webp",
-        "/assets/stickers/welcome-2.webp",
-        "/assets/stickers/welcome-3.webp"
-      ],
-      "isPremium": false
-    },
-    {
-      "id": "emotions",
-      "title": "Emotions",
-      "author": "Telegram Team", 
-      "emoji": "😊",
-      "stickers": [
-        "/assets/stickers/happy.webp",
-        "/assets/stickers/sad.webp",
-        "/assets/stickers/love.webp",
-        "/assets/stickers/angry.webp"
-      ],
-      "isPremium": false
-    },
-    {
-      "id": "animals",
-      "title": "Cute Animals",
-      "author": "CraneApp",
-      "emoji": "🐱",
-      "stickers": [
-        "/assets/stickers/cat.webp",
-        "/assets/stickers/dog.webp",
-        "/assets/stickers/bear.webp",
-        "/assets/stickers/fox.webp"
-      ],
-      "isPremium": true
-    }
-  ],
-  "recent": [],
-  "favorites": [],
-  "trending": [
-    {
-      "id": "funny",
-      "title": "Funny Memes",
-      "count": 12456,
-      "emoji": "😂"
-    }
-  ],
   "metadata": {
-    "version": "1.0",
-    "totalPacks": 3,
-    "totalStickers": 15,
-    "format": "webp",
-    "size": "512x512",
-    "uploadLimit": 120
+    "provider": "Craneapp Official Media",
+    "last_update": "2026-04-02T12:30:00Z",
+    "format_version": "2.1"
+  },
+  "sticker_packs": [
+    {
+      "id": "crane_essentials_v1",
+      "name": "Crane Essentials",
+      "author": "Crane Design Team",
+      "description": "Фирменные неоновые стикеры Craneapp для любых ситуаций.",
+      "thumbnail": "stickers/essentials/cover.webp",
+      "is_animated": true,
+      "is_premium": false,
+      "stickers": [
+        { "id": "ess_01", "emoji": ["👋", "hi", "привет"], "url": "stickers/essentials/01_wave.tgs" },
+        { "id": "ess_02", "emoji": ["❤️", "love", "любовь"], "url": "stickers/essentials/02_heart.tgs" },
+        { "id": "ess_03", "emoji": ["🔥", "lit", "огонь"], "url": "stickers/essentials/03_fire.tgs" },
+        { "id": "ess_04", "emoji": ["😭", "cry", "плачу"], "url": "stickers/essentials/04_sad.tgs" },
+        { "id": "ess_05", "emoji": ["😎", "cool", "круто"], "url": "stickers/essentials/05_cool.tgs" },
+        { "id": "ess_06", "emoji": ["👍", "ok", "лайк"], "url": "stickers/essentials/06_thumb.tgs" }
+      ]
+    },
+    {
+      "id": "cyberpunk_neon_v2",
+      "name": "Cyber Crane 2077",
+      "author": "Neon Artist",
+      "description": "Стикерпак в стиле киберпанк под нашу фиолетовую тему.",
+      "thumbnail": "stickers/cyber/cover.webp",
+      "is_animated": false,
+      "is_premium": true,
+      "stickers": [
+        { "id": "cyb_01", "emoji": ["⚡", "power", "заряд"], "url": "stickers/cyber/01_volt.webp" },
+        { "id": "cyb_02", "emoji": ["💻", "hack", "код"], "url": "stickers/cyber/02_matrix.webp" },
+        { "id": "cyb_03", "emoji": ["🎮", "game", "игра"], "url": "stickers/cyber/03_level.webp" },
+        { "id": "cyb_04", "emoji": ["🤖", "bot", "робот"], "url": "stickers/cyber/04_drone.webp" }
+      ]
+    },
+    {
+      "id": "reactions_pack",
+      "name": "Quick Reactions",
+      "author": "Craneapp",
+      "description": "Маленькие стикеры для быстрых реакций в чате.",
+      "thumbnail": "stickers/reactions/cover.webp",
+      "is_animated": true,
+      "is_premium": false,
+      "stickers": [
+        { "id": "react_1", "emoji": ["🎉", "party"], "url": "stickers/reactions/confetti.tgs" },
+        { "id": "react_2", "emoji": ["❓", "wtf"], "url": "stickers/reactions/question.tgs" },
+        { "id": "react_3", "emoji": ["🚀", "moon"], "url": "stickers/reactions/rocket.tgs" }
+      ]
+    }
+  ],
+  "config": {
+    "sticker_size_px": 512,
+    "preview_size_px": 128,
+    "animation_fps": 60,
+    "cache_ttl_days": 7
   }
 }
