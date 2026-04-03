@@ -1,0 +1,47 @@
+-- Таблица сообщений (Основной поток данных)
+-- Путь: database/schema/messages.txt
+
+CREATE TABLE IF NOT EXISTS messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    
+    -- Привязка к чату и отправителю
+    chat_id UUID NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+    sender_id UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL,
+    
+    -- Контент сообщения
+    text_content TEXT, -- Может быть NULL, если отправляется только файл
+    
+    -- Тип сообщения: 'text', 'image', 'video', 'voice', 'file', 'system'
+    message_type VARCHAR(20) DEFAULT 'text',
+    
+    -- Хранение метаданных в формате JSON (массив ссылок, размер, длительность видео)
+    -- Идеально для работы с нашим media-service
+    attachments JSONB DEFAULT '[]',
+    
+    -- Статусы жизненного цикла
+    status VARCHAR(15) DEFAULT 'sent', -- 'sent', 'delivered', 'read'
+    is_edited BOOLEAN DEFAULT false,
+    is_deleted BOOLEAN DEFAULT false, -- "Мягкое" удаление для истории
+    
+    -- Ответы (Reply) - ID родительского сообщения
+    reply_to_id UUID REFERENCES messages(id) ON DELETE SET NULL,
+
+    -- Таймстампы
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Таблица реакций (Telegram-style)
+CREATE TABLE IF NOT EXISTS message_reactions (
+    message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    emoji VARCHAR(10) NOT NULL,
+    PRIMARY KEY (message_id, user_id, emoji)
+);
+
+-- Критические индексы для скорости мессенджера
+-- Позволяет мгновенно загружать последние 50 сообщений конкретного чата
+CREATE INDEX idx_messages_chat_id_created ON messages(chat_id, created_at DESC);
+
+-- Позволяет быстро находить непрочитанные сообщения для счетчика в chats.html
+CREATE INDEX idx_messages_unread ON messages(chat_id) WHERE status != 'read';
