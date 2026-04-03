@@ -1,86 +1,106 @@
 /**
- * CraneApp Video Player Component
- * Telegram-style video preview/player (inline + fullscreen)
+ * CRANEAPP - UI COMPONENT: VIDEO PLAYER
+ * Путь: client/mobile/components/media/videoPlayer.js
+ * Описание: Кастомный плеер для воспроизведения видео-сообщений и файлов.
  */
 
 export class VideoPlayer {
-  static create({ videoUrl, thumbnailUrl, poster, onClose }) {
-    const player = document.createElement('div');
-    player.className = 'video-player';
-    
-    player.innerHTML = `
-      <div class="video-player-overlay" data-action="close"></div>
-      <div class="video-player-container">
-        <video 
-          src="${videoUrl}" 
-          poster="${thumbnailUrl || poster}" 
-          class="video-player-video"
-          playsinline
-          preload="metadata"
-          webkit-playsinline
-        >
-        </video>
-        <div class="video-player-play-overlay">
-          <div class="video-player-play-btn">▶️</div>
-        </div>
-        <div class="video-player-controls">
-          <div class="video-player-progress">
-            <div class="video-player-progress-filled"></div>
-          </div>
-          <div class="video-player-time">0:00 / 0:00</div>
-        </div>
-      </div>
-    `;
-    
-    const video = player.querySelector('.video-player-video');
-    const playOverlay = player.querySelector('.video-player-play-overlay');
-    const progress = player.querySelector('.video-player-progress-filled');
-    const time = player.querySelector('.video-player-time');
-    const overlay = player.querySelector('.video-player-overlay');
-    
-    // Play/Pause
-    playOverlay.addEventListener('click', () => video.play());
-    video.addEventListener('click', () => {
-      if (video.paused) video.play();
-      else video.pause();
-    });
-    
-    // Controls visibility
-    let controlsTimeout;
-    const showControls = () => {
-      clearTimeout(controlsTimeout);
-      player.classList.add('controls-visible');
-      controlsTimeout = setTimeout(() => {
-        player.classList.remove('controls-visible');
-      }, 3000);
-    };
-    
-    player.addEventListener('mousemove', showControls);
-    player.addEventListener('touchstart', showControls);
-    
-    // Progress + Time
-    video.addEventListener('loadedmetadata', () => {
-      time.textContent = this.formatTime(0) + ' / ' + this.formatTime(video.duration);
-    });
-    
-    video.addEventListener('timeupdate', () => {
-      const percent = (video.currentTime / video.duration) * 100;
-      progress.style.width = percent + '%';
-      time.textContent = this.formatTime(video.currentTime) + ' / ' + this.formatTime(video.duration);
-    });
-    
-    // Close
-    overlay.addEventListener('click', onClose);
-    
-    document.body.appendChild(player);
-    return player;
-  }
-  
-  static formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }
-}
+    /**
+     * @param {Object} options
+     * @param {string} options.src - URL видеофайла
+     * @param {string} options.poster - Превью-изображение
+     * @param {boolean} options.autoplay - Автозапуск (по умолчанию false)
+     */
+    constructor(options = {}) {
+        this.src = options.src;
+        this.poster = options.poster || '';
+        this.autoplay = options.autoplay || false;
+        this.videoElement = null;
+        this.container = null;
+    }
 
-window.CraneVideoPlayer = VideoPlayer.create;
+    /**
+     * Рендеринг плеера
+     */
+    render() {
+        this.container = document.createElement('div');
+        this.container.className = 'crane-video-container';
+
+        this.container.innerHTML = `
+            <video 
+                class="crane-video-element" 
+                poster="${this.poster}" 
+                ${this.autoplay ? 'autoplay' : ''} 
+                playsinline
+            >
+                <source src="${this.src}" type="video/mp4">
+                Ваш браузер не поддерживает видео.
+            </video>
+            
+            <div class="video-controls">
+                <button class="play-pause-btn">▶</button>
+                <div class="video-progress-bar">
+                    <div class="progress-filled"></div>
+                </div>
+                <span class="video-time">0:00</span>
+            </div>
+            
+            <div class="video-overlay-play">
+                <div class="play-icon-large"></div>
+            </div>
+        `;
+
+        this.videoElement = this.container.querySelector('.crane-video-element');
+        this._bindEvents();
+
+        return this.container;
+    }
+
+    _bindEvents() {
+        const playBtn = this.container.querySelector('.play-pause-btn');
+        const overlay = this.container.querySelector('.video-overlay-play');
+        const progress = this.container.querySelector('.progress-filled');
+        const timeDisplay = this.container.querySelector('.video-time');
+
+        // Переключение Play/Pause
+        const togglePlay = () => {
+            if (this.videoElement.paused) {
+                this.videoElement.play();
+                playBtn.textContent = '⏸';
+                overlay.style.display = 'none';
+            } else {
+                this.videoElement.pause();
+                playBtn.textContent = '▶';
+                overlay.style.display = 'flex';
+            }
+        };
+
+        this.container.onclick = togglePlay;
+
+        // Обновление прогресс-бара
+        this.videoElement.addEventListener('timeupdate', () => {
+            const pct = (this.videoElement.currentTime / this.videoElement.duration) * 100;
+            progress.style.width = `${pct}%`;
+            
+            const mins = Math.floor(this.videoElement.currentTime / 60);
+            const secs = Math.floor(this.videoElement.currentTime % 60);
+            timeDisplay.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        });
+
+        // Сброс по окончании
+        this.videoElement.onended = () => {
+            playBtn.textContent = '▶';
+            overlay.style.display = 'flex';
+        };
+    }
+
+    /**
+     * Методы управления для внешних контроллеров
+     */
+    play() { this.videoElement?.play(); }
+    pause() { this.videoElement?.pause(); }
+    destroy() {
+        this.pause();
+        this.container?.remove();
+    }
+}
