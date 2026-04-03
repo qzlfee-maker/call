@@ -1,108 +1,151 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enter Code - CraneApp</title>
-  <script src="../app/providers/authProvider.js"></script>
-  <script src="../../components/ui/button.js"></script>
-</head>
-<body class="theme-telegram">
-  <div class="auth-container">
-    <div class="auth-header">
-      <div class="auth-step">Step 2 of 3</div>
-      <h1>Enter verification code</h1>
-      <p id="phone-number">Code sent to +7 (999) 123-45-67</p>
-      <div class="code-timer">Resend code in <span id="timer">59</span>s</div>
-    </div>
-    
-    <div class="auth-form">
-      <div class="code-inputs">
-        <input type="text" maxlength="1" class="code-input" data-index="0">
-        <input type="text" maxlength="1" class="code-input" data-index="1">
-        <input type="text" maxlength="1" class="code-input" data-index="2">
-        <input type="text" maxlength="1" class="code-input" data-index="3">
-        <input type="text" maxlength="1" class="code-input" data-index="4">
-        <input type="text" maxlength="1" class="code-input" data-index="5">
-      </div>
-      
-      <button id="verify-btn" class="btn btn--primary btn--lg" style="width: 100%;" disabled>
-        Verify
-      </button>
-      
-      <div class="auth-footer">
-        <button id="change-number" class="text-link">Wrong number?</button>
-      </div>
-    </div>
-  </div>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Craneapp - Подтверждение</title>
+    <link rel="stylesheet" href="../../../public/styles.css">
+    <style>
+        body {
+            background-color: #1a1a2e;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 20px;
+            text-align: center;
+        }
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const auth = window.AuthProvider;
-      let code = '';
-      let countdown = 59;
-      
-      const inputs = document.querySelectorAll('.code-input');
-      const verifyBtn = document.getElementById('verify-btn');
-      const timerEl = document.getElementById('timer');
-      
-      // Auto-focus + next input
-      inputs.forEach((input, index) => {
-        input.addEventListener('input', (e) => {
-          code += e.target.value;
-          if (index < 5 && e.target.value) {
-            inputs[index + 1].focus();
-          }
-          updateVerifyButton();
+        .otp-container {
+            max-width: 400px;
+            width: 100%;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        .otp-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .otp-title { font-size: 22px; margin-bottom: 10px; }
+        .otp-subtitle { color: #888; font-size: 14px; margin-bottom: 30px; }
+        .target-phone { color: #7a5cff; font-weight: 600; }
+
+        /* Сетка для цифр кода */
+        .otp-inputs {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .otp-field {
+            width: 50px;
+            height: 60px;
+            background: #2b2b3d;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            text-align: center;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .otp-field:focus {
+            border-color: #7a5cff;
+            box-shadow: 0 0 10px rgba(122, 92, 255, 0.3);
+            background: #34344d;
+        }
+
+        .resend-container { margin-top: 20px; font-size: 14px; }
+        .resend-link { color: #7a5cff; cursor: pointer; text-decoration: none; }
+        .resend-link.disabled { color: #555; cursor: default; }
+
+        .btn-verify {
+            width: 100%;
+            padding: 14px;
+            background: #7a5cff;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="otp-container">
+        <div class="otp-icon">💬</div>
+        <h1 class="otp-title">Подтверждение номера</h1>
+        <p class="otp-subtitle">Мы отправили код на <br><span class="target-phone" id="display-phone">+7 999 *** 12 34</span></p>
+
+        <form id="otp-form">
+            <div class="otp-inputs">
+                <input type="number" class="otp-field" maxlength="1" pattern="\d*" inputmode="numeric">
+                <input type="number" class="otp-field" maxlength="1" pattern="\d*" inputmode="numeric">
+                <input type="number" class="otp-field" maxlength="1" pattern="\d*" inputmode="numeric">
+                <input type="number" class="otp-field" maxlength="1" pattern="\d*" inputmode="numeric">
+            </div>
+            
+            <button type="submit" class="btn-verify">Подтвердить</button>
+        </form>
+
+        <div class="resend-container">
+            Не получили код? <br>
+            <span id="timer" class="resend-link disabled">Отправить повторно через 59с</span>
+        </div>
+    </div>
+
+    <script type="module">
+        const inputs = document.querySelectorAll('.otp-field');
+        const form = document.getElementById('otp-form');
+
+        // Автофокус и переход между полями
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if (e.target.value.length > 1) {
+                    e.target.value = e.target.value.slice(0, 1);
+                }
+                if (e.target.value !== "" && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === "Backspace" && e.target.value === "" && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
         });
-        
-        input.addEventListener('keydown', (e) => {
-          if (e.key === 'Backspace' && !e.target.value && index > 0) {
-            inputs[index - 1].focus();
-          }
-        });
-      });
-      
-      function updateVerifyButton() {
-        verifyBtn.disabled = code.length !== 6;
-      }
-      
-      // Timer
-      const timer = setInterval(() => {
-        countdown--;
-        timerEl.textContent = countdown;
-        if (countdown <= 0) {
-          clearInterval(timer);
-          document.querySelector('.code-timer').innerHTML = 
-            '<button id="resend-code" class="text-link">Resend code</button>';
-        }
-      }, 1000);
-      
-      // Verify
-      verifyBtn.addEventListener('click', async () => {
-        verifyBtn.classList.add('loading');
-        try {
-          const result = await auth.login({ 
-            identifier: window.currentLogin,
-            code: code 
-          });
-          if (result.success) {
-            window.location.hash = '/chats';
-          }
-        } catch (error) {
-          console.error('Verification failed:', error);
-        }
-        verifyBtn.classList.remove('loading');
-      });
-      
-      // Resend
-      document.addEventListener('click', (e) => {
-        if (e.target.id === 'resend-code') {
-          // Resend logic
-          countdown = 59;
-        }
-      });
-    });
-  </script>
+
+        // Таймер повторной отправки
+        let timeLeft = 59;
+        const timerEl = document.getElementById('timer');
+        const countdown = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                timerEl.textContent = "Отправить повторно";
+                timerEl.classList.remove('disabled');
+            } else {
+                timerEl.textContent = `Отправить повторно через ${timeLeft}с`;
+                timeLeft--;
+            }
+        }, 1000);
+
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const code = Array.from(inputs).map(i => i.value).join('');
+            if (code.length === 4) {
+                console.log("Верификация кода:", code);
+                // Переход на main screen или завершение регистрации
+            }
+        };
+    </script>
 </body>
 </html>
