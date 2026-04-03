@@ -1,23 +1,31 @@
 /**
- * CraneApp File Size Formatting
- * Human readable bytes (1.2 MB, 45.3 GB)
+ * Утилита для конвертации байтов в человекочитаемый формат (КБ, МБ, ГБ).
+ * Используется для отображения веса вложений и кэша.
  */
 
-export const formatSize = {
-  // Format bytes to human readable
-  bytes(bytes) {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  },
+export const formatSize = (bytes) => {
+    if (bytes === 0 || !bytes) return '0 B';
 
-  // Storage usage percentage
-  usage(used, total) {
-    const percent = (used / total) * 100;
-    return `${formatSize.bytes(used)} of ${formatSize.bytes(total)} (${percent.toFixed(1)}%)`;
-  }
+    // Константа для расчета (1024 для бинарных данных)
+    const k = 1024;
+    
+    // Список единиц измерения
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+
+    // Находим индекс нужной единицы измерения через логарифм
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    // Ограничиваем индекс длиной массива (на случай экзотических размеров)
+    const unitIndex = Math.min(i, sizes.length - 1);
+
+    // Округляем до 1 знака после запятой (например, 1.4 MB)
+    const value = parseFloat((bytes / Math.pow(k, unitIndex)).toFixed(1));
+
+    return `${value} ${sizes[unitIndex]}`;
 };
 
-window.formatSize = formatSize;
+/**
+ * Пример использования:
+ * formatSize(1500) -> "1.5 KB"
+ * formatSize(1048576) -> "1.0 MB"
+ */
