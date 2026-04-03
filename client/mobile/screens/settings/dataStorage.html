@@ -1,62 +1,233 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Data & Storage - CraneApp</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Craneapp - Данные и память</title>
+    <link rel="stylesheet" href="../../../public/styles.css">
+    <style>
+        body {
+            background-color: #0f0f1a;
+            margin: 0;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .storage-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 80px 16px 40px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Визуализация хранилища */
+        .usage-card {
+            background: #1a1a2e;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(122, 92, 255, 0.1);
+        }
+
+        .usage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 12px;
+        }
+
+        .usage-title { font-size: 14px; color: #888; }
+        .usage-total { font-size: 20px; font-weight: 700; color: #7a5cff; }
+
+        .progress-bar {
+            height: 8px;
+            background: #2b2b3d;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #7a5cff;
+            width: 35%; /* Имитация заполнения */
+            border-radius: 4px;
+        }
+
+        .usage-legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        /* Списки настроек */
+        .settings-block { margin-bottom: 24px; }
+        .block-title {
+            font-size: 13px;
+            color: #7a5cff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0 0 10px 12px;
+            font-weight: 700;
+        }
+
+        .settings-card {
+            background: #1a1a2e;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .settings-row:last-child { border-bottom: none; }
+
+        .row-info { display: flex; flex-direction: column; gap: 2px; }
+        .row-title { font-size: 16px; }
+        .row-desc { font-size: 12px; color: #888; }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #2b2b3d;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background-color: #7a5cff; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .action-text { color: #ff453a; font-weight: 600; cursor: pointer; }
+    </style>
 </head>
-<body class="theme-telegram">
-  <div class="screen-container">
-    <div class="header">
-      <button class="header-back">←</button>
-      <div class="header-title">Data & Storage</div>
-    </div>
-    
-    <div class="settings-container">
-      <div class="storage-usage">
-        <div class="storage-bar">
-          <div class="storage-used" style="width: 65%;"></div>
+<body>
+
+    <div id="header-mount"></div>
+
+    <main class="storage-content">
+        
+        <div class="usage-card">
+            <div class="usage-header">
+                <span class="usage-title">Использовано Craneapp</span>
+                <span class="usage-total">1.2 ГБ</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+            <div class="usage-legend">
+                <div class="legend-item"><span class="dot" style="background:#7a5cff"></span> Кеш: 800 МБ</div>
+                <div class="legend-item"><span class="dot" style="background:#2b2b3d"></span> Свободно: 14 ГБ</div>
+            </div>
+            <div style="margin-top: 20px; text-align: center;">
+                <span class="action-text" onclick="clearCache()">Очистить кеш Craneapp</span>
+            </div>
         </div>
-        <div class="storage-info">
-          <span>5.2 GB of 15 GB used</span>
+
+        <div class="settings-block">
+            <div class="block-title">Автозагрузка медиа</div>
+            <div class="settings-card">
+                <div class="settings-row">
+                    <div class="row-info">
+                        <span class="row-title">Через мобильную сеть</span>
+                        <span class="row-desc">Фото, Видео (до 10 МБ)</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <div class="row-info">
+                        <span class="row-title">Через Wi-Fi</span>
+                        <span class="row-desc">Все медиафайлы</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
         </div>
-      </div>
-      
-      <div class="settings-section">
-        <h3>Storage Usage</h3>
-        <div class="storage-list">
-          <div class="storage-item">
-            <span>Photos</span>
-            <span>2.1 GB</span>
-          </div>
-          <div class="storage-item">
-            <span>Videos</span>
-            <span>2.3 GB</span>
-          </div>
-          <div class="storage-item">
-            <span>Files</span>
-            <span>0.8 GB</span>
-          </div>
+
+        <div class="settings-block">
+            <div class="block-title">Экономия трафика</div>
+            <div class="settings-card">
+                <div class="settings-row">
+                    <div class="row-info">
+                        <span class="row-title">Экономия при звонках</span>
+                        <span class="row-desc">Снижает качество звука для экономии данных</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
         </div>
-        <button class="btn btn--destructive btn--sm">Clear Cache</button>
-      </div>
-      
-      <div class="settings-section">
-        <h3>Automatic Media Download</h3>
-        <label class="settings-toggle">
-          <input type="checkbox" checked>
-          <span>Photos</span>
-        </label>
-        <label class="settings-toggle">
-          <input type="checkbox">
-          <span>Videos</span>
-        </label>
-        <label class="settings-toggle">
-          <input type="checkbox">
-          <span>Files</span>
-        </label>
-      </div>
-    </div>
-  </div>
+
+        <div class="settings-block">
+            <div class="settings-card">
+                <div class="settings-row" onclick="alert('Статистика трафика в разработке')">
+                    <div class="row-info">
+                        <span class="row-title">Использование сети</span>
+                        <span class="row-desc">Подробная статистика данных</span>
+                    </div>
+                    <span style="color:#444">›</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { Header } from '../../components/navigation/header.js';
+
+        const header = new Header({
+            title: 'Данные и память',
+            showBack: true,
+            onBack: () => window.history.back()
+        });
+        document.getElementById('header-mount').appendChild(header.render());
+
+        window.clearCache = () => {
+            if(confirm('Очистить кеш сообщений и медиа? Это освободит 800 МБ.')) {
+                alert('Кеш успешно очищен!');
+                location.reload();
+            }
+        };
+    </script>
 </body>
 </html>
