@@ -1,71 +1,97 @@
+import { authStore } from '../../store/authStore.js';
+
 /**
- * CraneApp Chat API Service
- * REST endpoints for chats/groups/channels
+ * API Сервис для управления чатами, группами и каналами.
+ * Взаимодействует с chat-service на Railway.
  */
 
-class ChatApi {
-  constructor() {
-    this.baseURL = 'https://api.craneapp.com/v1';
-  }
+const BASE_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5000/api/chats' 
+    : 'https://craneapp-production.up.railway.app/api/chats';
 
-  // Get user chats
-  async getChats() {
-    const token = localStorage.getItem('crane_token');
-    const response = await fetch(`${this.baseURL}/chats`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+export const chatApi = {
+    /**
+     * Получить заголовки всех чатов текущего пользователя
+     */
+    fetchMyChats: async () => {
+        const response = await fetch(`${BASE_URL}/all`, {
+            method: 'GET',
+            headers: getHeaders()
+        });
+        return await handleResponse(response);
+    },
 
-    if (!response.ok) throw new Error('Failed to load chats');
-    return await response.json();
-  }
+    /**
+     * Создать новый приватный чат (Direct Message)
+     * @param {string} userId - ID собеседника
+     */
+    createPrivateChat: async (userId) => {
+        const response = await fetch(`${BASE_URL}/private`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ recipientId: userId })
+        });
+        return await handleResponse(response);
+    },
 
-  // Get chat messages
-  async getMessages(chatId, limit = 50, before = null) {
-    const params = new URLSearchParams({ limit });
-    if (before) params.append('before', before);
-    
-    const token = localStorage.getItem('crane_token');
-    const response = await fetch(`${this.baseURL}/chats/${chatId}/messages?${params}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    /**
+     * Создать групповой чат
+     * @param {Object} groupData - { title, description, members: [] }
+     */
+    createGroup: async (groupData) => {
+        const response = await fetch(`${BASE_URL}/group`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(groupData)
+        });
+        return await handleResponse(response);
+    },
 
-    if (!response.ok) throw new Error('Failed to load messages');
-    return await response.json();
-  }
+    /**
+     * Покинуть чат или удалить его
+     * @param {string} chatId 
+     */
+    deleteChat: async (chatId) => {
+        const response = await fetch(`${BASE_URL}/${chatId}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        return await handleResponse(response);
+    },
 
-  // Create group
-  async createGroup(name, members) {
-    const token = localStorage.getItem('crane_token');
-    const response = await fetch(`${this.baseURL}/groups`, {
-      method: 'POST',
-      headers: {
+    /**
+     * Получить детальную информацию о чате (участники, настройки)
+     * @param {string} chatId 
+     */
+    getChatDetails: async (chatId) => {
+        const response = await fetch(`${BASE_URL}/${chatId}/details`, {
+            method: 'GET',
+            headers: getHeaders()
+        });
+        return await handleResponse(response);
+    }
+};
+
+/**
+ * Вспомогательная функция для формирования заголовков с JWT токеном
+ */
+function getHeaders() {
+    const token = authStore.getToken();
+    return {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ name, members })
-    });
-
-    if (!response.ok) throw new Error('Failed to create group');
-    return await response.json();
-  }
-
-  // Create channel
-  async createChannel(name, description, privacy = 'public') {
-    const token = localStorage.getItem('crane_token');
-    const response = await fetch(`${this.baseURL}/channels`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ name, description, privacy })
-    });
-
-    if (!response.ok) throw new Error('Failed to create channel');
-    return await response.json();
-  }
+    };
 }
 
-window.ChatApi = new ChatApi();
+/**
+ * Универсальный обработчик HTTP ответов
+ */
+async function handleResponse(response) {
+    const data = await response.json();
+    if (!response.ok) {
+        const error = new Error(data.message || 'Ошибка API чатов');
+        error.status = response.status;
+        throw error;
+    }
+    return data;
+}
