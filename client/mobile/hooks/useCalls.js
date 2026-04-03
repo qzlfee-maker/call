@@ -1,115 +1,99 @@
+import { authStore } from '../store/authStore.js';
+
 /**
- * CraneApp Calls Hook
- * VoIP call management + history + WebRTC
+ * Хук для управления звонками WebRTC в Craneapp.
  */
+export const useCalls = (onRemoteStream) => {
+    let peerConnection = null;
+    let localStream = null;
+    const token = authStore.getToken();
 
-export function useCalls() {
-  const calls = {
-    history: [],
-    activeCall: null,
-    isInCall: false,
-    isLoading: false
-  };
-
-  // Load call history
-  async function loadCallHistory() {
-    calls.isLoading = true;
-    
-    try {
-      // Mock call history
-      calls.history = [
-        { id: 1, contact: 'Alice Johnson', type: 'video', time: 'Today, 14:30', duration: '00:45', outgoing: true },
-        { id: 2, contact: 'Bob Wilson', type: 'voice', time: 'Today, 10:15', duration: '02:13', incoming: true, missed: true },
-        { id: 3, contact: 'Carol Davis', type: 'video', time: 'Mar 10', duration: '00:58', outgoing: true }
-      ];
-      
-      window.callsData = calls.history;
-      window.dispatchEvent(new CustomEvent('calls:loaded'));
-      
-    } finally {
-      calls.isLoading = false;
-    }
-  }
-
-  // Start call (WebRTC)
-  async function startCall(contactId, type = 'voice') {
-    calls.activeCall = {
-      id: Date.now(),
-      contactId,
-      type,
-      status: 'ringing',
-      startTime: Date.now()
+    // Конфигурация STUN-серверов Google для обхода NAT
+    const rtcConfig = {
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+        ]
     };
-    calls.isInCall = true;
-    
-    // Socket signaling
-    window.SocketProvider.startCall(contactId, type);
-    
-    window.dispatchEvent(new CustomEvent('call:started', { 
-      detail: calls.activeCall 
-    }));
-    
-    return calls.activeCall;
-  }
 
-  // Answer incoming call
-  function answerCall() {
-    if (calls.activeCall) {
-      calls.activeCall.status = 'connected';
-      window.dispatchEvent(new CustomEvent('call:answered'));
-    }
-  }
-
-  // End call
-  function endCall() {
-    if (calls.activeCall) {
-      const duration = Math.floor((Date.now() - calls.activeCall.startTime) / 1000);
-      calls.activeCall.duration = new Date(duration * 1000).toISOString().substr(14, 5);
-      calls.activeCall.status = 'ended';
-      
-      calls.history.unshift(calls.activeCall);
-      calls.activeCall = null;
-      calls.isInCall = false;
-      
-      window.dispatchEvent(new CustomEvent('call:ended'));
-    }
-  }
-
-  // Socket events
-  window.addEventListener('socket:call-offer', (e) => {
-    calls.activeCall = {
-      id: Date.now(),
-      contactId: e.detail.from,
-      type: e.detail.type,
-      status: 'incoming',
-      startTime: Date.now()
+    /**
+     * Инициализация локального медиапотока
+     */
+    const startLocalStream = async (video = false) => {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: video
+            });
+            return localStream;
+        } catch (err) {
+            console.error("Доступ к камере/микрофону запрещен:", err);
+            return null;
+        }
     };
-    calls.isInCall = true;
-    
-    window.dispatchEvent(new CustomEvent('call:incoming', { 
-      detail: calls.activeCall 
-    }));
-  });
 
-  // Initialize
-  loadCallHistory();
+    /**
+     * Создание исходящего звонка
+     */
+    const makeCall = async (recipientId, isVideo = false) => {
+        const stream = await startLocalStream(isVideo);
+        if (!stream) return;
 
-  window.CallProvider = {
-    loadCallHistory,
-    startCall,
-    answerCall,
-    endCall,
-    state: calls
-  };
+        peerConnection = new RTCPeerConnection(rtcConfig);
+        
+        // Добавляем наши треки в соединение
+        stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
 
-  return {
-    calls: () => calls.history,
-    activeCall: () => calls.activeCall,
-    isInCall: () => calls.isInCall,
-    isLoading: () => calls.isLoading,
-    startCall,
-    answerCall,
-    endCall,
-    loadCallHistory
-  };
-}
+        // Когда получаем поток от собеседника
+        peerConnection.ontrack = (event) => {
+            if (onRemoteStream) onRemoteStream(event.streams[0]);
+        };
+
+        // Создаем оффер (предложение)
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        // Отправляем сигнал через Socket (реализуем на бэкенде)
+        // socket.emit('call:offer', { to: recipientId, offer, isVideo });
+    };
+
+    /**
+     * Ответ на входящий звонок
+     */
+    const answerCall = async (callerId, offer) => {
+        const stream = await startLocalStream();
+        peerConnection = new RTCPeerConnection(rtcConfig);
+        
+        stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+        
+        peerConnection.ontrack = (event) => {
+            if (onRemoteStream) onRemoteStream(event.streams[0]);
+        };
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+
+        // socket.emit('call:answer', { to: callerId, answer });
+    };
+
+    /**
+     * Завершение звонка
+     */
+    const endCall = () => {
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+        }
+        if (peerConnection) {
+            peerConnection.close();
+        }
+        // socket.emit('call:end', { chatId });
+    };
+
+    return {
+        makeCall,
+        answerCall,
+        endCall,
+        getLocalStream: () => localStream
+    };
+};
