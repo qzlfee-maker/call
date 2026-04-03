@@ -1,143 +1,101 @@
-/**
- * ================================================================================
- * CRANEAPP — THEME PROVIDER (UI ENGINE)
- * ================================================================================
- * Файл: client/mobile/app/providers/themeProvider.js
- * Назначение: Управление визуальными темами, CSS-переменными и системными стилями.
- * ================================================================================
- */
+import darkTheme from '../../theme/themes/darkTheme.json' assert { type: 'json' };
+import lightTheme from '../../theme/themes/lightTheme.json' assert { type: 'json' };
+import telegramTheme from '../../theme/themes/telegramTheme.json' assert { type: 'json' };
+import colors from '../../theme/colors.json' assert { type: 'json' };
+import typography from '../../theme/typography.json' assert { type: 'json' };
+import spacing from '../../theme/spacing.json' assert { type: 'json' };
+
+const THEME_KEY = 'crane_theme';
+
+const THEMES = {
+  dark: darkTheme,
+  light: lightTheme,
+  telegram: telegramTheme,
+};
 
 export class ThemeProvider {
-    constructor() {
-        // Доступные темы приложения
-        this.themes = {
-            DARK: 'dark-theme',
-            LIGHT: 'light-theme',
-            TELEGRAM: 'telegram-theme',
-            NEON: 'neon-purple-theme' // Наша фирменная тема
-        };
+  constructor() {
+    this.currentThemeName = 'dark';
+    this.currentTheme = null;
+    this.listeners = new Set();
+  }
 
-        this.currentTheme = null;
-        this.storageKey = 'craneapp_theme_preference';
-        
-        // Слушатель системных изменений темы (Dark Mode в iOS/Android/Windows)
-        this.systemThemeMatcher = window.matchMedia('(prefers-color-scheme: dark)');
+  async init() {
+    const saved = localStorage.getItem(THEME_KEY) || 'dark';
+    await this.setTheme(saved);
+  }
+
+  async setTheme(themeName) {
+    const theme = THEMES[themeName];
+    if (!theme) {
+      console.warn(`[ThemeProvider] unknown theme: ${themeName}`);
+      return;
     }
 
-    /**
-     * Инициализация темы при запуске приложения
-     */
-    async init() {
-        console.log('[ThemeProvider] Initializing UI styles...');
-        
-        // 1. Пытаемся достать выбор пользователя из LocalStorage
-        const savedTheme = localStorage.getItem(this.storageKey);
-        
-        // 2. Если выбора нет — смотрим на системные настройки
-        if (savedTheme && Object.values(this.themes).includes(savedTheme)) {
-            this.currentTheme = savedTheme;
-        } else {
-            this.currentTheme = this.systemThemeMatcher.matches ? this.themes.NEON : this.themes.LIGHT;
-        }
+    this.currentThemeName = themeName;
+    this.currentTheme = { ...theme, colors, typography, spacing };
 
-        // 3. Применяем тему к документу
-        this.applyTheme(this.currentTheme);
-        
-        // 4. Подписываемся на изменения системы (если пользователь не выбрал тему вручную)
-        this.listenToSystemChanges();
+    this._applyCSSVariables(this.currentTheme);
+    localStorage.setItem(THEME_KEY, themeName);
+    this._notifyListeners(themeName);
+  }
+
+  _applyCSSVariables(theme) {
+    const root = document.documentElement;
+
+    const vars = {
+      '--color-bg': theme.background || '#0f0f18',
+      '--color-panel': theme.panel || '#1a1a2e',
+      '--color-primary': theme.primary || '#7a5cff',
+      '--color-accent': theme.accent || '#ff5ad6',
+      '--color-success': theme.success || '#00e676',
+      '--color-danger': theme.danger || '#ff5252',
+      '--color-text': theme.text || '#ffffff',
+      '--color-text-secondary': theme.textSecondary || '#8a8a9a',
+      '--color-border': theme.border || '#2a2a3e',
+      '--color-bubble-out': theme.bubbleOut || '#7a5cff',
+      '--color-bubble-in': theme.bubbleIn || '#1e1e30',
+      '--color-input-bg': theme.inputBg || '#1e1e30',
+      '--color-hover': theme.hover || '#ffffff14',
+      '--color-active': theme.active || '#ffffff22',
+      '--font-family': theme.typography?.fontFamily || "'Inter', sans-serif",
+      '--font-size-xs': theme.typography?.xs || '11px',
+      '--font-size-sm': theme.typography?.sm || '13px',
+      '--font-size-md': theme.typography?.md || '15px',
+      '--font-size-lg': theme.typography?.lg || '17px',
+      '--font-size-xl': theme.typography?.xl || '20px',
+      '--radius-sm': theme.spacing?.radiusSm || '6px',
+      '--radius-md': theme.spacing?.radiusMd || '12px',
+      '--radius-lg': theme.spacing?.radiusLg || '18px',
+      '--radius-full': '9999px',
+      '--transition': '0.2s ease',
+    };
+
+    for (const [key, value] of Object.entries(vars)) {
+      root.style.setProperty(key, value);
     }
 
-    /**
-     * Применение темы через манипуляцию классами на теге <html>
-     * и обновление мета-тегов (для цвета статус-бара на мобильных)
-     * @param {string} themeClass 
-     */
-    applyTheme(themeClass) {
-        const root = document.documentElement;
-        
-        // Удаляем все старые классы тем
-        Object.values(this.themes).forEach(t => root.classList.remove(t));
-        
-        // Добавляем новую
-        root.classList.add(themeClass);
-        this.currentTheme = themeClass;
+    document.body.setAttribute('data-theme', this.currentThemeName);
+  }
 
-        // Обновляем theme-color для мобильных браузеров (цвет статус-бара)
-        this.updateMetaThemeColor();
+  getTheme() {
+    return this.currentTheme;
+  }
 
-        // Сохраняем выбор
-        localStorage.setItem(this.storageKey, themeClass);
+  getThemeName() {
+    return this.currentThemeName;
+  }
 
-        // Уведомляем систему (например, для перерисовки графиков или специфических компонентов)
-        window.dispatchEvent(new CustomEvent('theme:changed', { detail: { theme: themeClass } }));
-        
-        console.log(`[ThemeProvider] Applied: ${themeClass}`);
-    }
+  getAvailableThemes() {
+    return Object.keys(THEMES);
+  }
 
-    /**
-     * Смена темы вручную пользователем
-     */
-    setTheme(themeKey) {
-        if (this.themes[themeKey]) {
-            this.applyTheme(this.themes[themeKey]);
-        }
-    }
+  onThemeChange(listener) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
 
-    /**
-     * Переключение "День/Ночь"
-     */
-    toggleDarkLight() {
-        if (this.currentTheme === this.themes.LIGHT) {
-            this.applyTheme(this.themes.NEON);
-        } else {
-            this.applyTheme(this.themes.LIGHT);
-        }
-    }
-
-    /**
-     * Обновление цвета браузерного интерфейса (Chrome Android / Safari iOS)
-     */
-    updateMetaThemeColor() {
-        let color = '#0f0f18'; // Дефолт (Neon/Dark)
-        
-        if (this.currentTheme === this.themes.LIGHT) color = '#ffffff';
-        if (this.currentTheme === this.themes.TELEGRAM) color = '#242f3d';
-
-        let metaTag = document.querySelector('meta[name="theme-color"]');
-        if (!metaTag) {
-            metaTag = document.createElement('meta');
-            metaTag.name = "theme-color";
-            document.head.appendChild(metaTag);
-        }
-        metaTag.setAttribute('content', color);
-    }
-
-    /**
-     * Автоматическое следование за системой
-     */
-    listenToSystemChanges() {
-        this.systemThemeMatcher.addEventListener('change', e => {
-            // Применяем системную тему только если пользователь не зафиксировал свой выбор вручную
-            // (В данной реализации мы всегда даем приоритет системе, если не сохранен ключ)
-            if (!localStorage.getItem(this.storageKey)) {
-                const newTheme = e.matches ? this.themes.NEON : this.themes.LIGHT;
-                this.applyTheme(newTheme);
-            }
-        });
-    }
-
-    /**
-     * Геттер для получения текущего состояния (нужно для JS-логики компонентов)
-     */
-    isDark() {
-        return this.currentTheme !== this.themes.LIGHT;
-    }
-
-    /**
-     * Метод для динамического получения значения CSS-переменной
-     * @param {string} varName - например '--accent-primary'
-     */
-    getVariable(varName) {
-        return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-    }
+  _notifyListeners(themeName) {
+    this.listeners.forEach((fn) => fn(themeName));
+  }
 }
