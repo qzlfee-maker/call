@@ -1,35 +1,38 @@
 {
-  "xxs": "4px",
-  "xs": "8px",
-  "sm": "12px",
-  "md": "16px",
-  "lg": "20px",
-  "xl": "24px",
-  "2xl": "32px",
-  "3xl": "40px",
-  "4xl": "48px",
-  "screen": {
-    "xs": "320px",
-    "sm": "390px",
-    "md": "428px",
-    "lg": "480px"
-  },
-  "components": {
-    "header-height": "56px",
-    "tabbar-height": "56px + env(safe-area-inset-bottom)",
-    "avatar-xs": "32px",
-    "avatar-sm": "40px",
-    "avatar-md": "48px",
-    "avatar-lg": "56px",
-    "avatar-xl": "96px",
-    "chat-bubble-padding": "12px 16px",
-    "input-height": "44px",
-    "button-height": "36px",
-    "badge-size": "20px"
-  },
+  "name": "Craneapp Spacing System",
+  "grid_base": 4,
   "layout": {
-    "section-gap": "24px",
-    "list-item-gap": "8px",
-    "card-padding": "20px"
+    "screen_padding": "16px",
+    "header_height": "60px",
+    "tabbar_height": "65px",
+    "item_gap": "12px"
+  },
+  "message_bubbles": {
+    "padding_horizontal": "12px",
+    "padding_vertical": "8px",
+    "margin_bottom": "4px",
+    "max_width": "75%",
+    "border_radius": {
+      "outer": "18px",
+      "inner": "6px",
+      "sharp": "2px"
+    }
+  },
+  "ui_elements": {
+    "button_height": "48px",
+    "input_height": "44px",
+    "avatar_size": {
+      "xs": "24px",
+      "sm": "32px",
+      "md": "48px",
+      "lg": "64px",
+      "xl": "120px"
+    },
+    "card_radius": "20px",
+    "modal_radius": "24px"
+  },
+  "touch_targets": {
+    "min_size": "44px",
+    "icon_padding": "8px"
   }
 }
