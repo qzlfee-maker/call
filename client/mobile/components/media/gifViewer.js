@@ -1,65 +1,88 @@
 /**
- * CraneApp GIF Viewer Component
- * Telegram-style GIF preview/player (autoplay, share, save)
+ * CRANEAPP - UI COMPONENT: GIF VIEWER
+ * Путь: client/mobile/components/media/gifViewer.js
+ * Описание: Оптимизированный компонент для отображения и управления GIF-анимациями.
  */
 
 export class GifViewer {
-  static create({ gifUrl, previewUrl, senderName, onShare, onSave }) {
-    const viewer = document.createElement('div');
-    viewer.className = 'gif-viewer';
-    
-    viewer.innerHTML = `
-      <div class="gif-viewer-overlay"></div>
-      <div class="gif-viewer-header">
-        <button class="gif-viewer-close">←</button>
-        <div class="gif-viewer-sender">${senderName}</div>
-      </div>
-      <div class="gif-viewer-container">
-        <img src="${previewUrl || gifUrl}" class="gif-viewer-gif" data-src="${gifUrl}" />
-      </div>
-      <div class="gif-viewer-actions">
-        <button class="gif-action" data-action="share">↗️ Share</button>
-        <button class="gif-action" data-action="save">💾 Save</button>
-        <button class="gif-action" data-action="copy">📋 Copy link</button>
-      </div>
-    `;
-    
-    const gif = viewer.querySelector('.gif-viewer-gif');
-    const closeBtn = viewer.querySelector('.gif-viewer-close');
-    const actions = viewer.querySelectorAll('.gif-action');
-    
-    // Load full GIF
-    gif.addEventListener('load', () => {
-      gif.src = gif.dataset.src;
-      gif.classList.add('loaded');
-    });
-    
-    // Autoplay on hover (Telegram-style)
-    gif.addEventListener('mouseenter', () => gif.play?.());
-    gif.addEventListener('mouseleave', () => gif.pause?.());
-    
-    // Actions
-    closeBtn.addEventListener('click', () => viewer.remove());
-    
-    actions.forEach(action => {
-      action.addEventListener('click', () => {
-        const actionType = action.dataset.action;
-        if (actionType === 'share') onShare?.(gifUrl);
-        if (actionType === 'save') onSave?.(gifUrl);
-        if (actionType === 'copy') {
-          navigator.clipboard.writeText(gifUrl);
-          action.textContent = 'Copied!';
-          setTimeout(() => action.textContent = 'Copy link', 2000);
-        }
-      });
-    });
-    
-    // Overlay close
-    viewer.querySelector('.gif-viewer-overlay').addEventListener('click', () => viewer.remove());
-    
-    document.body.appendChild(viewer);
-    return viewer;
-  }
-}
+    /**
+     * @param {Object} options
+     * @param {string} options.src - URL GIF-файла или зацикленного видео
+     * @param {boolean} options.autoplay - Начинать ли воспроизведение сразу
+     */
+    constructor(options = {}) {
+        this.src = options.src;
+        this.autoplay = options.autoplay !== false;
+        this.container = null;
+        this.isPaused = !this.autoplay;
+    }
 
-window.CraneGifViewer = GifViewer.create;
+    /**
+     * Рендеринг компонента
+     */
+    render() {
+        this.container = document.createElement('div');
+        this.container.className = 'crane-gif-container';
+        
+        // В мессенджерах GIF часто передаются как mp4 без звука для экономии трафика
+        const isVideo = this.src.endsWith('.mp4') || this.src.endsWith('.webm');
+
+        if (isVideo) {
+            this.container.innerHTML = `
+                <video 
+                    class="gif-element" 
+                    loop 
+                    muted 
+                    playsinline 
+                    ${this.autoplay ? 'autoplay' : ''}
+                >
+                    <source src="${this.src}" type="video/mp4">
+                </video>
+                <div class="gif-badge">GIF</div>
+            `;
+        } else {
+            this.container.innerHTML = `
+                <img src="${this.src}" class="gif-element" alt="GIF Animation">
+                <div class="gif-badge">GIF</div>
+            `;
+        }
+
+        this._bindEvents();
+        return this.container;
+    }
+
+    /**
+     * Управление воспроизведением по клику
+     */
+    _bindEvents() {
+        const media = this.container.querySelector('.gif-element');
+        
+        this.container.onclick = (e) => {
+            e.stopPropagation();
+            if (media.tagName === 'VIDEO') {
+                if (media.paused) {
+                    media.play();
+                    this.container.classList.remove('is-paused');
+                } else {
+                    media.pause();
+                    this.container.classList.add('is-paused');
+                }
+            } else {
+                // Для обычных .gif файлов просто переключаем визуальный статус
+                this.isPaused = !this.isPaused;
+                this.container.classList.toggle('is-paused', this.isPaused);
+                media.style.opacity = this.isPaused ? '0.6' : '1';
+            }
+        };
+    }
+
+    destroy() {
+        const video = this.container?.querySelector('video');
+        if (video) {
+            video.pause();
+            video.src = "";
+            video.load();
+        }
+        this.container?.remove();
+    }
+}
