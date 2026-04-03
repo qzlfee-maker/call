@@ -1,84 +1,77 @@
 /**
- * CraneApp LocalStorage Manager
- * Settings + drafts + quick cache
- * Fallback for non-IndexedDB browsers
+ * Сервис постоянного хранения данных (Persistent Storage).
+ * Обертка над браузерным LocalStorage с поддержкой JSON и префиксов.
  */
 
-class LocalStorageManager {
-  constructor() {
-    this.namespace = 'craneapp_';
-    this.init();
-  }
+const APP_PREFIX = 'crane_';
 
-  init() {
-    // Migrate old data if needed
-    if (localStorage.getItem('chats')) {
-      this.set('chats_v1', JSON.parse(localStorage.getItem('chats')));
-      localStorage.removeItem('chats');
+class LocalStorageService {
+    /**
+     * Сохранить данные
+     * @param {string} key 
+     * @param {any} value 
+     */
+    set(key, value) {
+        try {
+            const serializedValue = JSON.stringify(value);
+            localStorage.setItem(`${APP_PREFIX}${key}`, serializedValue);
+        } catch (error) {
+            console.error(`[Storage] Error saving ${key}:`, error);
+            // Обработка переполнения квоты (обычно 5MB)
+            if (error.name === 'QuotaExceededError') {
+                this.clearOldData();
+            }
+        }
     }
-  }
 
-  // Settings (theme, notifications, privacy)
-  setSetting(key, value) {
-    localStorage.setItem(this.namespace + 'setting_' + key, JSON.stringify(value));
-  }
-
-  getSetting(key, defaultValue = null) {
-    try {
-      const value = localStorage.getItem(this.namespace + 'setting_' + key);
-      return value ? JSON.parse(value) : defaultValue;
-    } catch {
-      return defaultValue;
+    /**
+     * Получить данные
+     * @param {string} key 
+     * @param {any} defaultValue 
+     */
+    get(key, defaultValue = null) {
+        try {
+            const item = localStorage.getItem(`${APP_PREFIX}${key}`);
+            return item ? JSON.parse(item) : defaultValue;
+        } catch (error) {
+            console.error(`[Storage] Error reading ${key}:`, error);
+            return defaultValue;
+        }
     }
-  }
 
-  // Chat drafts
-  setDraft(chatId, draft) {
-    localStorage.setItem(this.namespace + 'draft_' + chatId, draft);
-  }
-
-  getDraft(chatId) {
-    return localStorage.getItem(this.namespace + 'draft_' + chatId) || '';
-  }
-
-  // Quick cache (30min TTL)
-  setQuickCache(key, data, ttl = 30 * 60 * 1000) {
-    const cache = {
-      data,
-      expiry: Date.now() + ttl
-    };
-    localStorage.setItem(this.namespace + 'cache_' + key, JSON.stringify(cache));
-  }
-
-  getQuickCache(key) {
-    try {
-      const cached = localStorage.getItem(this.namespace + 'cache_' + key);
-      if (!cached) return null;
-      
-      const { data, expiry } = JSON.parse(cached);
-      return Date.now() < expiry ? data : null;
-    } catch {
-      return null;
+    /**
+     * Удалить конкретный ключ
+     */
+    remove(key) {
+        localStorage.removeItem(`${APP_PREFIX}${key}`);
     }
-  }
 
-  // Clear drafts for chat
-  clearDraft(chatId) {
-    localStorage.removeItem(this.namespace + 'draft_' + chatId);
-  }
-
-  // Get all drafts
-  getAllDrafts() {
-    const drafts = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith(this.namespace + 'draft_')) {
-        const chatId = key.replace(this.namespace + 'draft_', '');
-        drafts[chatId] = this.getDraft(chatId);
-      }
+    /**
+     * Полная очистка данных приложения (например, при Logout)
+     */
+    clear() {
+        Object.keys(localStorage)
+            .filter(key => key.startsWith(APP_PREFIX))
+            .forEach(key => localStorage.removeItem(key));
+        console.log('[Storage] App data cleared');
     }
-    return drafts;
-  }
+
+    /**
+     * Вспомогательный метод для очистки места
+     * Удаляет старые кэшированные сообщения, оставляя токены и настройки
+     */
+    clearOldData() {
+        console.warn('[Storage] Quota exceeded, cleaning messages cache...');
+        this.remove('messages_cache');
+    }
+
+    /**
+     * Проверка наличия ключа
+     */
+    has(key) {
+        return localStorage.getItem(`${APP_PREFIX}${key}`) !== null;
+    }
 }
 
-window.LocalStorageManager = new LocalStorageManager();
+// Экспортируем синглтон
+export const storage = new LocalStorageService();
