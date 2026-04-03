@@ -3,234 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Craneapp - Чаты</title>
+    <title>Craneapp - Приватный чат</title>
     <link rel="stylesheet" href="../../../public/styles.css">
     <style>
+        :root {
+            --chat-bg: #0f0f1a;
+            --footer-bg: #1a1a2e;
+        }
+
         body {
-            background-color: #0f0f1a;
+            background-color: var(--chat-bg);
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             margin: 0;
+            font-family: 'Inter', sans-serif;
         }
 
-        /* Контейнер списка чатов */
-        #chats-list-container {
+        /* Основной контейнер сообщений */
+        #chat-flow {
             flex: 1;
             overflow-y: auto;
-            padding-top: 60px; /* Высота хедера */
-            padding-bottom: 70px; /* Высота таб-бара */
-            -webkit-overflow-scrolling: touch;
-        }
-
-        /* Элемент списка (диалог) */
-        .chat-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            gap: 14px;
-            cursor: pointer;
-            transition: background 0.2s;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-        }
-
-        .chat-item:active {
-            background: rgba(122, 92, 255, 0.1);
-        }
-
-        .chat-avatar-wrapper {
-            position: relative;
-        }
-
-        .chat-avatar {
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            object-fit: cover;
-            background: #2b2b3d;
-        }
-
-        .status-indicator {
-            position: absolute;
-            bottom: 2px;
-            right: 2px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            border: 2px solid #0f0f1a;
-            background: #4cd964;
-            display: none;
-        }
-
-        .status-online { display: block; }
-
-        .chat-info {
-            flex: 1;
+            padding: 70px 12px 20px 12px;
             display: flex;
             flex-direction: column;
-            gap: 4px;
-            overflow: hidden;
-        }
-
-        .chat-header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .chat-name {
-            font-weight: 600;
-            color: #fff;
-            font-size: 16px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .chat-time {
-            font-size: 12px;
-            color: #666;
-        }
-
-        .chat-message-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             gap: 8px;
+            scroll-behavior: smooth;
+            /* Оптимизация скролла для мобильных */
+            -webkit-overflow-scrolling: touch;
+            background-image: radial-gradient(circle at 50% 50%, rgba(122, 92, 255, 0.05) 0%, transparent 100%);
         }
 
-        .chat-last-message {
-            font-size: 14px;
+        /* Индикатор того, что собеседник печатает */
+        #typing-indicator {
+            padding: 4px 16px;
+            font-size: 12px;
+            color: #7a5cff;
+            height: 20px;
+            transition: opacity 0.3s;
+            opacity: 0;
+        }
+
+        #typing-indicator.active {
+            opacity: 1;
+        }
+
+        /* Футер фиксируется снизу и адаптируется под клавиатуру */
+        .chat-footer-container {
+            background: var(--footer-bg);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: env(safe-area-inset-bottom);
+            z-index: 100;
+        }
+
+        /* Стили для системных уведомлений (дата, шифрование) */
+        .system-badge {
+            align-self: center;
+            background: rgba(43, 43, 61, 0.6);
             color: #888;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .unread-badge {
-            background: #7a5cff;
-            color: #fff;
             font-size: 11px;
-            font-weight: bold;
-            min-width: 18px;
-            height: 18px;
-            padding: 0 5px;
-            border-radius: 9px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 4px 12px;
+            border-radius: 12px;
+            margin: 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        /* Плавающая кнопка нового чата */
-        .fab-button {
-            position: fixed;
-            right: 20px;
-            bottom: 85px;
-            width: 56px;
-            height: 56px;
-            border-radius: 28px;
-            background: #7a5cff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
-            border: none;
-            cursor: pointer;
-            z-index: 900;
+        /* Плавное появление новых сообщений */
+        .msg-animate {
+            animation: msgIn 0.2s ease-out;
+        }
+
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
 
     <div id="header-mount"></div>
-    <div id="drawer-mount"></div>
 
-    <main id="chats-list-container">
-        <div id="chats-list"></div>
+    <main id="chat-flow">
+        <div class="system-badge">🛡️ Сквозное шифрование включено</div>
+        <div class="system-badge">Сегодня</div>
+        
+        <div id="messages-list"></div>
     </main>
 
-    <button class="fab-button" id="new-chat-btn">✏️</button>
-
-    <div id="tabbar-mount"></div>
+    <div class="chat-footer-container">
+        <div id="typing-indicator">Александр печатает...</div>
+        <div id="input-mount"></div>
+    </div>
 
     <script type="module">
         import { Header } from '../../components/navigation/header.js';
-        import { TabBar } from '../../components/navigation/tabBar.js';
-        import { DrawerMenu } from '../../components/navigation/drawerMenu.js';
-        import { formatDate } from '../../utils/formatDate.js';
+        import { MessageInput } from '../../components/chat/messageInput.js';
+        import { MessageBubble } from '../../components/chat/messageBubble.js';
+        import { socketClient } from '../../services/socket/socketClient.js';
 
-        // 1. Инициализация Хедера (с кнопкой Drawer)
+        // 1. Инициализация заголовка чата
+        const urlParams = new URLSearchParams(window.location.search);
+        const chatId = urlParams.get('id') || 'new';
+
         const header = new Header({
-            title: 'Craneapp',
+            title: 'Александр',
+            subtitle: 'в сети',
+            avatarUrl: 'https://i.pravatar.cc/150?u=alex',
+            showBack: true,
+            onBack: () => window.location.href = 'chats.html',
             actions: [
-                { icon: '🔍', onClick: () => window.location.href = '../search/search.html' }
-            ],
-            showBack: false
+                { icon: '📞', onClick: () => console.log('Call...') },
+                { icon: '🔍', onClick: () => console.log('Search in chat...') }
+            ]
         });
         document.getElementById('header-mount').appendChild(header.render());
 
-        // Добавляем бургер-меню (кастомная логика для Header)
-        const burgerBtn = document.createElement('button');
-        burgerBtn.className = 'header-btn';
-        burgerBtn.innerHTML = '☰';
-        burgerBtn.onclick = () => {
-            const drawer = new DrawerMenu({
-                user: { name: 'Admin', phone: '+7 900 Crane', avatar: '' },
-                items: [
-                    { id: 'group', icon: '👥', label: 'Создать группу', onClick: () => {} },
-                    { id: 'settings', icon: '⚙️', label: 'Настройки', onClick: () => {} }
-                ]
-            });
-            drawer.show();
-        };
-        header.element.querySelector('.header-left').prepend(burgerBtn);
-
-        // 2. Инициализация Таб-бара
-        const tabBar = new TabBar({
-            initialTab: 'chats',
-            onTabChange: (id) => {
-                if(id !== 'chats') window.location.href = `../${id}/${id}.html`;
+        // 2. Инициализация ввода
+        const messageInput = new MessageInput({
+            onSendMessage: (text) => {
+                sendMessage(text);
+            },
+            onTyping: () => {
+                // Эмит события через сокет
+                socketClient.emit('typing', { chatId });
             }
         });
-        document.getElementById('tabbar-mount').appendChild(tabBar.render());
+        document.getElementById('input-mount').appendChild(messageInput.render());
 
-        // 3. Данные и рендер списка чатов
-        const mockChats = [
-            { id: 1, name: 'Александр', lastMsg: 'Завтра пришлю макеты', time: new Date(), unread: 2, online: true },
-            { id: 2, name: 'Craneapp Dev Group', lastMsg: 'Railway: deploy success!', time: new Date(Date.now() - 3600000), unread: 0, online: false },
-            { id: 3, name: 'Илон', lastMsg: 'Check this out 🚀', time: new Date(Date.now() - 86400000), unread: 1, online: true }
-        ];
+        // 3. Логика отправки и отображения
+        const messagesList = document.getElementById('messages-list');
+        const chatFlow = document.getElementById('chat-flow');
 
-        const listContainer = document.getElementById('chats-list');
+        function sendMessage(text) {
+            if(!text.trim()) return;
 
-        function renderChats(chats) {
-            listContainer.innerHTML = chats.map(chat => `
-                <div class="chat-item" onclick="window.location.href='chat.html?id=${chat.id}'">
-                    <div class="chat-avatar-wrapper">
-                        <img src="https://i.pravatar.cc/150?u=${chat.id}" class="chat-avatar" alt="avatar">
-                        <div class="status-indicator ${chat.online ? 'status-online' : ''}"></div>
-                    </div>
-                    <div class="chat-info">
-                        <div class="header-row">
-                            <span class="chat-name">${chat.name}</span>
-                            <span class="chat-time">${chat.time.getHours()}:${chat.time.getMinutes()}</span>
-                        </div>
-                        <div class="chat-message-row">
-                            <span class="chat-last-message">${chat.lastMsg}</span>
-                            ${chat.unread > 0 ? `<div class="unread-badge">${chat.unread}</div>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+            const msg = new MessageBubble({
+                id: Date.now().toString(),
+                text: text,
+                timestamp: new Date().toISOString(),
+                isOwn: true,
+                status: 'sending' // 'sent', 'delivered', 'read'
+            });
+
+            const el = msg.render();
+            el.classList.add('msg-animate');
+            messagesList.appendChild(el);
+            
+            // Авто-скролл вниз
+            chatFlow.scrollTop = chatFlow.scrollHeight;
+
+            // Имитация API запроса
+            setTimeout(() => {
+                msg.updateStatus('sent');
+            }, 1000);
         }
 
-        renderChats(mockChats);
+        // Прием входящих сообщений (демо)
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const incoming = new MessageBubble({
+                    id: 'rcv_1',
+                    text: 'Привет! Это чистый код для Railway 🚀',
+                    timestamp: new Date().toISOString(),
+                    isOwn: false
+                });
+                messagesList.appendChild(incoming.render());
+            }, 2000);
+        });
 
-        // Обновление бейджа на таб-баре (пример)
-        tabBar.updateBadge('chats', 3);
     </script>
 </body>
 </html>
