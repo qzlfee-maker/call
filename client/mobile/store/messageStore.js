@@ -1,78 +1,114 @@
+import { storage } from '../services/storage/localStorage.js';
+
 /**
- * CraneApp Message Store
- * Per-chat messages + sending status + read receipts
+ * Хранилище сообщений для активных чатов.
+ * Поддерживает кэширование последних сообщений для быстрого открытия.
  */
 
 class MessageStore {
-  constructor() {
-    this.state = {
-      currentChatId: null,
-      messages: [],
-      isLoading: false,
-      sending: []
-    };
-    this.listeners = [];
-  }
+    constructor() {
+        // Структура: { [chatId]: [messages] }
+        this._messagesByChat = storage.get('messages_cache', {});
+        this._listeners = [];
+    }
 
-  setState(newState) {
-    Object.assign(this.state, newState);
-    this.notify();
-  }
+    /**
+     * Получить сообщения для конкретного чата
+     */
+    getMessages(chatId) {
+        return this._messagesByChat[chatId] || [];
+    }
 
-  async loadMessages(chatId) {
-    this.setState({ 
-      currentChatId: chatId, 
-      isLoading: true 
-    });
+    /**
+     * Массовая установка сообщений (например, после загрузки истории с Railway)
+     */
+    setMessages(chatId, messages, isAppend = false) {
+        if (isAppend) {
+            // Добавляем старые сообщения в начало (для пагинации вверх)
+            const current = this._messagesByChat[chatId] || [];
+            this._messagesByChat[chatId] = [...messages, ...current];
+        } else {
+            // Полная перезагрузка или первая загрузка
+            this._messagesByChat[chatId] = messages;
+        }
+        
+        this._saveAndNotify();
+    }
 
-    // Mock messages
-    const messages = [
-      { id: Date.now()-1000, senderId: 2, content: 'Hello! How are you?', time: '14:20', isOwn: false },
-      { id: Date.now()-800, senderId: 1, content: 'Hey! Doing great thanks!', time: '14:22', isOwn: true, status: 'sent' },
-      { id: Date.now()-500, senderId: 2, content: 'What are you working on?', time: '14:23', isOwn: false }
-    ];
+    /**
+     * Добавить одно сообщение (входящее или только что отправленное)
+     */
+    addMessage(message) {
+        const { chatId } = message;
+        if (!this._messagesByChat[chatId]) {
+            this._messagesByChat[chatId] = [];
+        }
 
-    this.setState({ 
-      messages, 
-      isLoading: false 
-    });
-    
-    window.messagesData = messages;
-  }
+        // Проверка на дубликаты (чтобы избежать повторов при медленном сокете)
+        const exists = this._messagesByChat[chatId].find(m => m.id === message.id || m.tempId === message.tempId);
+        if (exists) {
+            // Если сообщение уже есть (например, подтверждение отправки), обновляем его
+            Object.assign(exists, message);
+        } else {
+            this._messagesByChat[chatId].push(message);
+        }
 
-  sendMessage(content) {
-    const message = {
-      id: Date.now(),
-      senderId: window.AuthStore?.state.user?.id || 1,
-      content,
-      time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-      isOwn: true,
-      status: 'sending'
-    };
+        this._saveAndNotify();
+    }
 
-    this.state.messages.push(message);
-    this.state.sending.push(message.id);
-    this.notify();
+    /**
+     * Обновить статус прочтения
+     */
+    markAsRead(chatId, messageIds) {
+        const messages = this._messagesByChat[chatId];
+        if (messages) {
+            messages.forEach(m => {
+                if (messageIds.includes(m.id)) m.status = 'read';
+            });
+            this._saveAndNotify();
+        }
+    }
 
-    // Simulate delivery
-    setTimeout(() => {
-      const msg = this.state.messages.find(m => m.id === message.id);
-      if (msg) {
-        msg.status = 'sent';
-        this.state.sending = this.state.sending.filter(id => id !== message.id);
-        this.notify();
-      }
-    }, 1200);
-  }
+    /**
+     * Удаление сообщения из локального стора
+     */
+    removeMessage(chatId, messageId) {
+        if (this._messagesByChat[chatId]) {
+            this._messagesByChat[chatId] = this._messagesByChat[chatId]
+                .filter(m => m.id !== messageId);
+            this._saveAndNotify();
+        }
+    }
 
-  subscribe(callback) {
-    this.listeners.push(callback);
-    callback(this.state);
-  }
+    /**
+     * Очистка кэша сообщений (при выходе или нехватке места)
+     */
+    clear() {
+        this._messagesByChat = {};
+        storage.remove('messages_cache');
+        this._notify();
+    }
 
-  notify() {
-    this.listeners.forEach(cb => cb(this.state));
-  }
+    _saveAndNotify() {
+        // Сохраняем в localStorage только последние 20 сообщений каждого чата для кэша
+        const cacheToSave = {};
+        for (const [id, msgs] of Object.entries(this._messagesByChat)) {
+            cacheToSave[id] = msgs.slice(-20);
+        }
+        storage.set('messages_cache', cacheToSave);
+        this._notify();
+    }
+
+    subscribe(callback) {
+        this._listeners.push(callback);
+        return () => {
+            this._listeners = this._listeners.filter(l => l !== callback);
+        };
+    }
+
+    _notify() {
+        this._listeners.forEach(callback => callback(this._messagesByChat));
+    }
 }
 
-window.MessageStore = new MessageStore();
+export const messageStore = new MessageStore();
