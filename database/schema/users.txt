@@ -1,0 +1,36 @@
+-- Таблица пользователей Craneapp
+-- Путь: database/schema/users.txt
+
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    
+    -- Основные данные (Auth Service)
+    username VARCHAR(30) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    phone VARCHAR(20) UNIQUE,
+    
+    -- Профиль (User Service)
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    bio VARCHAR(150),
+    avatar_url TEXT DEFAULT 'https://api.dicebear.com/7.x/avataaars/svg?seed=default',
+    
+    -- Системные поля
+    role VARCHAR(10) DEFAULT 'user', -- user, admin, moderator
+    status VARCHAR(20) DEFAULT 'offline', -- online, offline, busy
+    last_seen TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Настройки безопасности
+    is_verified BOOLEAN DEFAULT false,
+    two_factor_enabled BOOLEAN DEFAULT false,
+    
+    -- Таймстампы
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Индексы для быстрого поиска (используются в userController.js)
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_phone ON users(phone);
