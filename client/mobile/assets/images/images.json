@@ -1,63 +1,11 @@
 {
-  "metadata": {
-    "project": "Craneapp Messenger",
-    "asset_version": "1.0.2",
-    "base_url": "https://cdn.craneapp.io/static/"
-  },
-  "backgrounds": [
-    {
-      "id": "crane_pattern_dark",
-      "name": "Crane Midnight",
-      "url": "bg/pattern_dark.svg",
-      "type": "pattern",
-      "is_premium": false,
-      "theme_compatibility": "dark"
-    },
-    {
-      "id": "neon_gradient_01",
-      "name": "Electric Purple",
-      "url": "bg/gradient_01.jpg",
-      "type": "gradient",
-      "is_premium": true,
-      "theme_compatibility": "any"
-    }
-  ],
-  "illustrations": {
-    "empty_chats": {
-      "url": "illu/no_chats.svg",
-      "alt": "У вас пока нет активных диалогов",
-      "color_scheme": ["#7a5cff", "#1a1a2e"]
-    },
-    "no_connection": {
-      "url": "illu/offline.svg",
-      "alt": "Проблемы с сетью",
-      "color_scheme": ["#ff5ad6"]
-    },
-    "search_not_found": {
-      "url": "illu/not_found.svg",
-      "alt": "Ничего не найдено"
-    }
-  },
-  "stickers": {
-    "crane_official_v1": {
-      "name": "Crane Life",
-      "author": "Crane Team",
-      "thumbnail": "stickers/crane/thumb.webp",
-      "items": [
-        { "id": "crane_hi", "emoji": "👋", "url": "stickers/crane/01_hi.webp" },
-        { "id": "crane_love", "emoji": "❤️", "url": "stickers/crane/02_love.webp" },
-        { "id": "crane_cool", "emoji": "😎", "url": "stickers/crane/03_cool.webp" },
-        { "id": "crane_work", "emoji": "💻", "url": "stickers/crane/04_work.webp" },
-        { "id": "crane_sleep", "emoji": "😴", "url": "stickers/crane/05_sleep.webp" }
-      ]
-    }
-  },
-  "avatars": {
-    "default_placeholders": [
-      { "id": "p1", "url": "avatars/p1.svg", "color": "#7a5cff" },
-      { "id": "p2", "url": "avatars/p2.svg", "color": "#ff5ad6" },
-      { "id": "p3", "url": "avatars/p3.svg", "color": "#5ad7ff" }
-    ],
-    "bot_identity": "avatars/crane_bot_official.png"
-  }
+  "defaultAvatar": "/assets/images/default-avatar.png",
+  "logo": "/assets/images/crane-logo.svg",
+  "logoText": "/assets/images/crane-logo-text.svg",
+  "emptyChats": "/assets/images/empty-chats.svg",
+  "emptyContacts": "/assets/images/empty-contacts.svg",
+  "emptyCalls": "/assets/images/empty-calls.svg",
+  "noNetwork": "/assets/images/no-network.svg",
+  "groupDefaultAvatar": "/assets/images/group-default.png",
+  "channelDefaultAvatar": "/assets/images/channel-default.png"
 }
