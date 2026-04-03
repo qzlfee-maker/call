@@ -1,83 +1,87 @@
+import { authStore } from '../store/authStore.js';
+
 /**
- * CraneApp Messages Hook
- * Real-time message management for active chat
+ * Хук для управления сообщениями в реальном времени через Socket.io.
  */
+export const useMessages = (chatId, onNewMessage) => {
+    let socket = null;
+    const user = authStore.getUser();
+    const token = authStore.getToken();
 
-export function useMessages(chatId) {
-  const messages = {
-    list: [],
-    isLoading: false,
-    sending: new Set()
-  };
+    // URL сервера на Railway или локально
+    const SOCKET_URL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:5000' 
+        : 'https://craneapp-production.up.railway.app';
 
-  // Load messages for chat
-  async function loadMessages() {
-    messages.isLoading = true;
-    
-    try {
-      // Mock messages (replace with messageApi.getMessages(chatId))
-      messages.list = [
-        { id: 1, senderId: 2, content: 'Hello! How are you today?', time: '14:20', isOwn: false },
-        { id: 2, senderId: 1, content: 'Hey Alice! I\'m doing great, thanks!', time: '14:22', isOwn: true },
-        { id: 3, senderId: 2, content: 'Great to hear! What are you working on?', time: '14:23', isOwn: false }
-      ];
-      
-      window.messagesData = messages.list;
-      window.dispatchEvent(new CustomEvent('messages:loaded'));
-      
-    } finally {
-      messages.isLoading = false;
-    }
-  }
+    /**
+     * Инициализация соединения
+     */
+    const connect = () => {
+        if (!token) return;
 
-  // Send message
-  async function sendMessage(content) {
-    const messageId = Date.now();
-    messages.sending.add(messageId);
-    
-    const message = {
-      id: messageId,
-      senderId: window.AuthProvider.getUser()?.id || 1,
-      content,
-      time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-      isOwn: true,
-      status: 'sending'
+        // Подключаемся с передачей токена для авторизации на сервере
+        socket = io(SOCKET_URL, {
+            auth: { token },
+            query: { chatId }
+        });
+
+        // Слушаем входящие сообщения
+        socket.on('message:receive', (message) => {
+            if (onNewMessage) onNewMessage(message);
+        });
+
+        // Слушаем статус "печатает"
+        socket.on('typing:display', (data) => {
+            if (data.chatId === chatId) {
+                console.log(`${data.username} печатает...`);
+                // Здесь можно вызвать callback для UI
+            }
+        });
+
+        socket.on('connect_error', (err) => {
+            console.error('Ошибка сокета:', err.message);
+        });
     };
-    
-    messages.list.push(message);
-    window.dispatchEvent(new CustomEvent('messages:sent'));
-    
-    // Socket emit
-    window.SocketProvider.sendMessage(chatId, content);
-    
-    // Simulate delivery
-    setTimeout(() => {
-      messages.sending.delete(messageId);
-      message.status = 'sent';
-    }, 1000);
-  }
 
-  // Socket events
-  window.addEventListener('socket:message-received', (e) => {
-    if (e.detail.chatId == chatId && !e.detail.isOwn) {
-      messages.list.push(e.detail);
-      window.dispatchEvent(new CustomEvent('messages:received'));
-    }
-  });
+    /**
+     * Отправка текстового сообщения
+     * @param {string} text 
+     */
+    const sendMessage = (text) => {
+        if (!socket || !text.trim()) return;
 
-  loadMessages();
+        const messageData = {
+            chatId,
+            senderId: user.id,
+            text: text.trim(),
+            timestamp: new Date().toISOString()
+        };
 
-  window.MessageProvider = {
-    loadMessages,
-    sendMessage,
-    state: messages
-  };
+        socket.emit('message:send', messageData);
+        return messageData; // Возвращаем для мгновенного отображения (Optimistic UI)
+    };
 
-  return {
-    messages: () => messages.list,
-    isLoading: () => messages.isLoading,
-    isSending: (id) => messages.sending.has(id),
-    sendMessage,
-    loadMessages
-  };
-}
+    /**
+     * Отправка статуса "печатает"
+     */
+    const sendTypingStatus = (isTyping) => {
+        if (!socket) return;
+        socket.emit('typing:start', { chatId, isTyping });
+    };
+
+    /**
+     * Закрытие соединения при уходе с экрана чата
+     */
+    const disconnect = () => {
+        if (socket) {
+            socket.disconnect();
+        }
+    };
+
+    return {
+        connect,
+        sendMessage,
+        sendTypingStatus,
+        disconnect
+    };
+};
