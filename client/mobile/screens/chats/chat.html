@@ -1,95 +1,236 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat - CraneApp</title>
-  <script src="../../app/providers/authProvider.js"></script>
-  <script src="../../app/providers/socketProvider.js"></script>
-  <script src="../../components/chat/messageBubble.js"></script>
-  <script src="../../components/chat/messageInput.js"></script>
-  <script src="../../components/ui/avatar.js"></script>
-</head>
-<body class="theme-telegram">
-  <div class="screen-container">
-    <div class="chat-header">
-      <button class="header-back">←</button>
-      <div class="chat-header-info">
-        <div class="chat-avatar">
-          ${CraneAvatar.create({ name: 'Alice Johnson', size: 40, online: true }).outerHTML}
-        </div>
-        <div class="chat-user-info">
-          <div class="chat-user-name">Alice Johnson</div>
-          <div class="chat-user-status">online</div>
-        </div>
-      </div>
-      <div class="chat-header-actions">
-        <button class="header-action">📞</button>
-        <button class="header-action">📹</button>
-        <button class="header-action">☰</button>
-      </div>
-    </div>
-    
-    <div class="messages-container" id="messages-container">
-      <!-- Dynamic messages -->
-    </div>
-    
-    <div id="message-input"></div>
-  </div>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Craneapp - Чаты</title>
+    <link rel="stylesheet" href="../../../public/styles.css">
+    <style>
+        body {
+            background-color: #0f0f1a;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin: 0;
+        }
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const auth = window.AuthProvider;
-      const socket = window.SocketProvider;
-      
-      if (!auth.isAuth()) {
-        window.location.hash = '/auth/login';
-        return;
-      }
-      
-      const chatId = window.location.hash.match(/chat\/(\d+)/)?.[1] || 1;
-      const messagesContainer = document.getElementById('messages-container');
-      
-      // Mock messages
-      window.messagesData = [
-        { id: 1, senderId: 2, content: 'Hello! How are you today?', time: '14:20', isOwn: false },
-        { id: 2, senderId: 1, content: 'Hey Alice! I\'m doing great, thanks!', time: '14:22', isOwn: true, isRead: true },
-        { id: 3, senderId: 2, content: 'Great to hear! What are you working on?', time: '14:23', isOwn: false }
-      ];
-      
-      renderMessages();
-      
-      // Message input
-      const messageInput = CraneMessageInput.create({
-        chatId,
-        onSend: (content) => {
-          const message = {
-            id: Date.now(),
-            senderId: auth.getUser().id,
-            content,
-            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-            isOwn: true
-          };
-          window.messagesData.push(message);
-          renderMessages();
-          socket.sendMessage(chatId, content);
-        },
-        onAttach: () => console.log('Attach media'),
-        onEmoji: () => console.log('Open emoji'),
-        onVoice: () => console.log('Voice message')
-      });
-      document.getElementById('message-input').appendChild(messageInput);
-      
-      function renderMessages() {
-        messagesContainer.innerHTML = window.messagesData.map(msg => 
-          CraneMessageBubble.create({
-            ...msg,
-            onLongPress: (data) => console.log('Long press:', data)
-          })
-        ).join('');
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      }
-    });
-  </script>
+        /* Контейнер списка чатов */
+        #chats-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding-top: 60px; /* Высота хедера */
+            padding-bottom: 70px; /* Высота таб-бара */
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Элемент списка (диалог) */
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            gap: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .chat-item:active {
+            background: rgba(122, 92, 255, 0.1);
+        }
+
+        .chat-avatar-wrapper {
+            position: relative;
+        }
+
+        .chat-avatar {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #2b2b3d;
+        }
+
+        .status-indicator {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #0f0f1a;
+            background: #4cd964;
+            display: none;
+        }
+
+        .status-online { display: block; }
+
+        .chat-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow: hidden;
+        }
+
+        .chat-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-name {
+            font-weight: 600;
+            color: #fff;
+            font-size: 16px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-time {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .chat-message-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-last-message {
+            font-size: 14px;
+            color: #888;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .unread-badge {
+            background: #7a5cff;
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Плавающая кнопка нового чата */
+        .fab-button {
+            position: fixed;
+            right: 20px;
+            bottom: 85px;
+            width: 56px;
+            height: 56px;
+            border-radius: 28px;
+            background: #7a5cff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            border: none;
+            cursor: pointer;
+            z-index: 900;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header-mount"></div>
+    <div id="drawer-mount"></div>
+
+    <main id="chats-list-container">
+        <div id="chats-list"></div>
+    </main>
+
+    <button class="fab-button" id="new-chat-btn">✏️</button>
+
+    <div id="tabbar-mount"></div>
+
+    <script type="module">
+        import { Header } from '../../components/navigation/header.js';
+        import { TabBar } from '../../components/navigation/tabBar.js';
+        import { DrawerMenu } from '../../components/navigation/drawerMenu.js';
+        import { formatDate } from '../../utils/formatDate.js';
+
+        // 1. Инициализация Хедера (с кнопкой Drawer)
+        const header = new Header({
+            title: 'Craneapp',
+            actions: [
+                { icon: '🔍', onClick: () => window.location.href = '../search/search.html' }
+            ],
+            showBack: false
+        });
+        document.getElementById('header-mount').appendChild(header.render());
+
+        // Добавляем бургер-меню (кастомная логика для Header)
+        const burgerBtn = document.createElement('button');
+        burgerBtn.className = 'header-btn';
+        burgerBtn.innerHTML = '☰';
+        burgerBtn.onclick = () => {
+            const drawer = new DrawerMenu({
+                user: { name: 'Admin', phone: '+7 900 Crane', avatar: '' },
+                items: [
+                    { id: 'group', icon: '👥', label: 'Создать группу', onClick: () => {} },
+                    { id: 'settings', icon: '⚙️', label: 'Настройки', onClick: () => {} }
+                ]
+            });
+            drawer.show();
+        };
+        header.element.querySelector('.header-left').prepend(burgerBtn);
+
+        // 2. Инициализация Таб-бара
+        const tabBar = new TabBar({
+            initialTab: 'chats',
+            onTabChange: (id) => {
+                if(id !== 'chats') window.location.href = `../${id}/${id}.html`;
+            }
+        });
+        document.getElementById('tabbar-mount').appendChild(tabBar.render());
+
+        // 3. Данные и рендер списка чатов
+        const mockChats = [
+            { id: 1, name: 'Александр', lastMsg: 'Завтра пришлю макеты', time: new Date(), unread: 2, online: true },
+            { id: 2, name: 'Craneapp Dev Group', lastMsg: 'Railway: deploy success!', time: new Date(Date.now() - 3600000), unread: 0, online: false },
+            { id: 3, name: 'Илон', lastMsg: 'Check this out 🚀', time: new Date(Date.now() - 86400000), unread: 1, online: true }
+        ];
+
+        const listContainer = document.getElementById('chats-list');
+
+        function renderChats(chats) {
+            listContainer.innerHTML = chats.map(chat => `
+                <div class="chat-item" onclick="window.location.href='chat.html?id=${chat.id}'">
+                    <div class="chat-avatar-wrapper">
+                        <img src="https://i.pravatar.cc/150?u=${chat.id}" class="chat-avatar" alt="avatar">
+                        <div class="status-indicator ${chat.online ? 'status-online' : ''}"></div>
+                    </div>
+                    <div class="chat-info">
+                        <div class="header-row">
+                            <span class="chat-name">${chat.name}</span>
+                            <span class="chat-time">${chat.time.getHours()}:${chat.time.getMinutes()}</span>
+                        </div>
+                        <div class="chat-message-row">
+                            <span class="chat-last-message">${chat.lastMsg}</span>
+                            ${chat.unread > 0 ? `<div class="unread-badge">${chat.unread}</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        renderChats(mockChats);
+
+        // Обновление бейджа на таб-баре (пример)
+        tabBar.updateBadge('chats', 3);
+    </script>
 </body>
 </html>
