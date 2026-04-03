@@ -1,0 +1,36 @@
+# Stage 1: Сборка (если в будущем добавится минификация/транспиляция)
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Копируем зависимости (если есть package.json в папке клиента)
+COPY package*.json ./
+RUN npm install
+
+# Копируем исходный код клиента
+COPY . .
+
+# Если вы используете сборщик (webpack/vite), раскомментируйте:
+# RUN npm run build
+
+# Stage 2: Раздача статики через Nginx
+FROM nginx:stable-alpine
+
+# Копируем конфигурацию Nginx для корректной работы SPA/Navigation
+# (Файл должен лежать рядом с Dockerfile или быть встроенным)
+RUN echo 'server { \
+    listen 80; \
+    location / { \
+        root /usr/share/nginx/html; \
+        index index.html; \
+        try_files $uri $uri/ /index.html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
+
+# Копируем статические файлы из папки клиента в директорию Nginx
+# В структуре Craneapp статика лежит в client/mobile/
+COPY --from=builder /app/client/mobile/ /usr/share/nginx/html/
+
+# Открываем порт для Railway
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
