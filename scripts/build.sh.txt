@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# ==========================================
+# CRANEAPP BUILD AUTOMATION SCRIPT
+# Описание: Сборка клиентской и серверной частей
+# ==========================================
+
+# Цвета для терминала
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+echo -e "${BLUE}🏗️  Начинаем сборку Craneapp...${NC}"
+
+# 1. Проверка окружения
+echo -e "${BLUE}🔍 Проверка зависимостей...${NC}"
+command -v docker >/dev/null 2>&1 || { echo -e "${RED}❌ Docker не установлен. Прерывание.${NC}"; exit 1; }
+
+# 2. Очистка старых билдов
+echo -e "${BLUE}🧹 Очистка временных файлов...${NC}"
+rm -rf dist/
+mkdir -p dist/
+
+# 3. Сборка Сервера (Backend)
+echo -e "${BLUE}📦 Сборка Docker-образа сервера...${NC}"
+docker build -t crane-server:latest \
+    -f infrastructure/docker/serverDockerfile.txt .
+
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ Сервер успешно собран.${NC}"
+else
+    echo -e "${RED}❌ Ошибка сборки сервера.${NC}"
+    exit 1
+fi
+
+# 4. Сборка Клиента (Frontend)
+echo -e "${BLUE}📱 Сборка Docker-образа мобильного клиента...${NC}"
+docker build -t crane-client:latest \
+    -f infrastructure/docker/clientDockerfile.txt .
+
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ Клиент успешно собран.${NC}"
+else
+    echo -e "${RED}❌ Ошибка сборки клиента.${NC}"
+    exit 1
+fi
+
+# 5. Итоговая проверка
+echo -e "${GREEN}🚀 Сборка завершена успешно!${NC}"
+echo -e "Используйте ${BLUE}docker-compose -f infrastructure/docker/docker-compose.json up${NC} для запуска."
+
+# 6. (Опционально) Тегирование для Railway
+# docker tag crane-server:latest registry.railway.app/craneapp/server:latest
+# docker tag crane-client:latest registry.railway.app/craneapp/client:latest
