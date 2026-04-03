@@ -1,60 +1,75 @@
+import { cache } from '../storage/cache.js';
+import { authStore } from '../../store/authStore.js';
+
 /**
- * CraneApp Media Download Service
- * Caching + background download + offline viewing
+ * Сервис скачивания и управления медиа-контентом.
+ * Интегрирован с кэшем для мгновенного доступа к ранее загруженным файлам.
  */
 
 class DownloadService {
-  constructor() {
-    this.cache = new Map();
-  }
+    /**
+     * Получить URL для отображения медиа (из кэша или с сервера)
+     * @param {string} fileId - ID файла в базе данных
+     * @param {string} type - Тип контента (image, video, document)
+     */
+    async getMediaUrl(fileId, type = 'image') {
+        const cacheKey = `media_${fileId}`;
+        
+        // 1. Проверяем наличие в оперативном кэше (cache.js)
+        const cachedUrl = cache.get(cacheKey);
+        if (cachedUrl) return cachedUrl;
 
-  // Download media file
-  async downloadMedia(mediaId, url) {
-    // Check cache first
-    const cached = this.cache.get(mediaId);
-    if (cached) return cached;
+        // 2. Если нет в кэше — формируем запрос к Railway
+        const API_URL = window.location.hostname === 'localhost' 
+            ? `http://localhost:5000/api/media/download/${fileId}` 
+            : `https://craneapp-production.up.railway.app/api/media/download/${fileId}`;
 
-    const token = localStorage.getItem('crane_token');
-    
-    const response = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+        try {
+            const response = await fetch(API_URL, {
+                headers: { 'Authorization': `Bearer ${authStore.getToken()}` }
+            });
 
-    if (!response.ok) throw new Error('Download failed');
+            if (!response.ok) throw new Error('Ошибка при получении файла');
 
-    const blob = await response.blob();
-    const cachedBlob = new Blob([blob], { type: blob.type });
-    
-    // Cache blob URL (24h TTL)
-    const blobUrl = URL.createObjectURL(cachedBlob);
-    this.cache.set(mediaId, blobUrl);
-    
-    // Cleanup old cache
-    setTimeout(() => {
-      URL.revokeObjectURL(blobUrl);
-      this.cache.delete(mediaId);
-    }, 24 * 60 * 60 * 1000);
-    
-    return blobUrl;
-  }
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
 
-  // Preload multiple media files
-  async preloadMedia(mediaIds) {
-    const promises = mediaIds.map(async (media) => {
-      try {
-        await this.downloadMedia(media.id, media.url);
-      } catch (e) {
-        console.warn('Preload failed:', media.id);
-      }
-    });
-    return Promise.all(promises);
-  }
+            // 3. Сохраняем в кэш (TTL 1 час для медиа)
+            cache.set(cacheKey, objectUrl, 60 * 60 * 1000);
 
-  // Clear all cache
-  clearCache() {
-    this.cache.forEach(url => URL.revokeObjectURL(url));
-    this.cache.clear();
-  }
+            return objectUrl;
+        } catch (error) {
+            console.error('[DownloadService] Failed to fetch media:', error);
+            return null; // Возвращаем null, чтобы UI показал заглушку (placeholder)
+        }
+    }
+
+    /**
+     * Принудительное скачивание файла на устройство (для документов)
+     * @param {string} fileId 
+     * @param {string} fileName 
+     */
+    async downloadToFileSystem(fileId, fileName) {
+        const url = await this.getMediaUrl(fileId, 'document');
+        if (!url) return;
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Не забываем освобождать память, если это был временный Blob
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+
+    /**
+     * Предзагрузка (Preloading) для видео или больших изображений
+     */
+    async preload(fileId) {
+        return this.getMediaUrl(fileId);
+    }
 }
 
-window.DownloadService = new DownloadService();
+export const downloadService = new DownloadService();
