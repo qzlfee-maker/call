@@ -1,69 +1,73 @@
 /**
- * CraneApp Form Validation
- * Phone/email/password/username rules
+ * Утилиты для валидации вводимых данных (Формы, Сообщения, Профиль).
+ * Предотвращает отправку некорректных данных на сервер Railway.
  */
 
 export const validators = {
-  // Phone number (+7 999 123-45-67)
-  phone(value) {
-    const phoneRegex = /^(\+7|8|7)[\s-]?\(?[0-9]{3}\)?[\s-]?[0-9]{3}[\s-]?[0-9]{2}[\s-]?[0-9]{2}$/;
-    return phoneRegex.test(value.replace(/\D/g, ''));
-  },
+    /**
+     * Проверка Email
+     */
+    isValidEmail: (email) => {
+        const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return re.test(String(email).toLowerCase());
+    },
 
-  // Email validation
-  email(value) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  },
+    /**
+     * Проверка сложности пароля
+     * Минимум 8 символов, одна заглавная буква и одна цифра
+     */
+    isStrongPassword: (password) => {
+        return password.length >= 8 && 
+               /[A-Z]/.test(password) && 
+               /[0-9]/.test(password);
+    },
 
-  // Username (@username 5-32 chars)
-  username(value) {
-    return /^@[a-zA-Z0-9_]{5,32}$/.test(value);
-  },
+    /**
+     * Проверка юзернейма (только латиница, цифры и подчеркивание)
+     */
+    isValidUsername: (username) => {
+        const re = /^[a-zA-Z0-9_]{3,20}$/;
+        return re.test(username);
+    },
 
-  // Password (8+ chars, 1 uppercase, 1 number)
-  password(value) {
-    return /^(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/.test(value);
-  },
+    /**
+     * Проверка текста сообщения (не пустое и не только пробелы)
+     */
+    isValidMessage: (text) => {
+        return text && text.trim().length > 0;
+    },
 
-  // Chat name (1-128 chars)
-  chatName(value) {
-    return value.trim().length >= 1 && value.length <= 128;
-  },
+    /**
+     * Валидация номера телефона (международный формат)
+     */
+    isValidPhone: (phone) => {
+        const re = /^\+?[1-9]\d{1,14}$/;
+        return re.test(phone);
+    },
 
-  // File size (max 50MB)
-  fileSize(file, maxBytes = 50 * 1024 * 1024) {
-    return file.size <= maxBytes;
-  },
+    /**
+     * Обобщенный метод для проверки полей формы
+     * @param {Object} data - { email: '...', password: '...' }
+     * @returns {Object} - { isValid: boolean, errors: {} }
+     */
+    validateForm: (data) => {
+        const errors = {};
+        
+        if (data.email && !validators.isValidEmail(data.email)) {
+            errors.email = 'Некорректный формат почты';
+        }
+        
+        if (data.password && !validators.isStrongPassword(data.password)) {
+            errors.password = 'Пароль слишком слабый';
+        }
 
-  // Validate form fields
-  validateForm(fields) {
-    const errors = {};
-    
-    if (fields.phone && !this.phone(fields.phone)) {
-      errors.phone = 'Invalid phone number';
+        if (data.username && !validators.isValidUsername(data.username)) {
+            errors.username = '3-20 символов (латиница, цифры)';
+        }
+
+        return {
+            isValid: Object.keys(errors).length === 0,
+            errors
+        };
     }
-    
-    if (fields.email && !this.email(fields.email)) {
-      errors.email = 'Invalid email address';
-    }
-    
-    if (fields.username && !this.username(fields.username)) {
-      errors.username = 'Username must be 5-32 chars (letters, numbers, _)';
-    }
-    
-    if (fields.password && !this.password(fields.password)) {
-      errors.password = 'Password must be 8+ chars with uppercase & number';
-    }
-    
-    if (fields.name && !this.chatName(fields.name)) {
-      errors.name = 'Name must be 1-128 characters';
-    }
-    
-    return {
-      isValid: Object.keys(errors).length === 0,
-      errors
-    };
-  }
 };
-
-window.validators = validators;
