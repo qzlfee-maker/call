@@ -1,98 +1,310 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New Group - CraneApp</title>
-  <script src="../../app/providers/authProvider.js"></script>
-  <script src="../../components/ui/avatar.js"></script>
-  <script src="../../components/ui/input.js"></script>
-</head>
-<body class="theme-telegram">
-  <div class="screen-container">
-    <div class="header">
-      <button class="header-back">←</button>
-      <div class="header-title">New Group</div>
-      <button id="create-group-btn" class="btn btn--primary" disabled>Create</button>
-    </div>
-    
-    <div class="create-group-container">
-      <div class="group-avatar-section">
-        <div class="avatar-upload">
-          ${CraneAvatar.create({ name: 'Group', size: 80 }).outerHTML}
-          <button class="avatar-edit">📎</button>
-        </div>
-        <p>Add group photo</p>
-      </div>
-      
-      <div id="group-name-input"></div>
-      
-      <div class="section-title">Add members</div>
-      <div class="contacts-list" id="contacts-list">
-        <!-- Dynamic contacts -->
-      </div>
-    </div>
-  </div>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const groupNameInput = CraneInput.create({
-        placeholder: 'Group name',
-        onChange: (value) => {
-          window.groupName = value;
-          updateCreateButton();
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Craneapp - Создать группу</title>
+    <link rel="stylesheet" href="../../../public/styles.css">
+    <style>
+        body {
+            background-color: #0f0f1a;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin: 0;
+            color: #fff;
         }
-      });
-      document.getElementById('group-name-input').appendChild(groupNameInput);
-      
-      // Mock contacts
-      const contacts = [
-        { id: 1, name: 'Alice Johnson', selected: false },
-        { id: 2, name: 'Bob Wilson', selected: false },
-        { id: 3, name: 'Carol Davis', selected: false }
-      ];
-      
-      const list = document.getElementById('contacts-list');
-      list.innerHTML = contacts.map(contact => `
-        <div class="contact-item" data-contact-id="${contact.id}">
-          <div class="contact-avatar">
-            ${CraneAvatar.create({ name: contact.name, size: 48 }).outerHTML}
-          </div>
-          <div class="contact-info">
-            <span class="contact-name">${contact.name}</span>
-          </div>
-          <div class="contact-checkbox">☐</div>
+
+        /* Верхняя секция: Инфо о группе */
+        .group-info-section {
+            padding: 80px 20px 20px; /* Отступ под хедер */
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: #1a1a2e;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .group-avatar-picker {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .group-avatar-preview {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #2b2b3d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: 1px dashed #7a5cff;
+            object-fit: cover;
+        }
+
+        .group-avatar-overlay {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            background: #7a5cff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            border: 2px solid #1a1a2e;
+        }
+
+        .group-name-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 16px;
+            padding: 8px 0;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .group-name-input:focus {
+            border-color: #7a5cff;
+        }
+
+        /* Секция выбора контактов */
+        .contacts-section {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 90px; /* Отступ под плавающую кнопку */
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .section-title {
+            padding: 16px 20px 8px;
+            font-size: 13px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .contact-item:active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .contact-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2b2b3d;
+            object-fit: cover;
+        }
+
+        .contact-info {
+            flex: 1;
+        }
+
+        .contact-name {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .contact-status {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        /* Кастомный чекбокс */
+        .crane-checkbox {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .crane-checkbox::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.2s;
+        }
+
+        .contact-item.selected .crane-checkbox {
+            background: #7a5cff;
+            border-color: #7a5cff;
+        }
+
+        .contact-item.selected .crane-checkbox::after {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Плавающая кнопка подтверждения */
+        .fab-done {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 28px;
+            background: #7a5cff;
+            box-shadow: 0 4px 15px rgba(122, 92, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            border: none;
+            cursor: pointer;
+            z-index: 100;
+            transform: scale(0);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .fab-done.visible {
+            transform: scale(1);
+        }
+
+        #file-input { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="header-mount"></div>
+
+    <section class="group-info-section">
+        <div class="group-avatar-picker" onclick="document.getElementById('file-input').click()">
+            <div id="preview" class="group-avatar-preview">📷</div>
+            <div class="group-avatar-overlay">+</div>
+            <input type="file" id="file-input" accept="image/*">
         </div>
-      `).join('');
-      
-      // Contact selection
-      list.querySelectorAll('.contact-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const id = parseInt(item.dataset.contactId);
-          const contact = contacts.find(c => c.id === id);
-          contact.selected = !contact.selected;
-          item.querySelector('.contact-checkbox').textContent = 
-            contact.selected ? '☑' : '☐';
-          updateCreateButton();
+        <input type="text" id="group-name" class="group-name-input" placeholder="Название группы" maxlength="50">
+    </section>
+
+    <section class="contacts-section">
+        <div class="section-title">Кто будет в группе? (<span id="selected-count">0</span>)</div>
+        <div id="contacts-list"></div>
+    </section>
+
+    <button class="fab-done" id="btn-create">➔</button>
+
+    <script type="module">
+        import { Header } from '../../components/navigation/header.js';
+
+        // 1. Инициализация хедера
+        const header = new Header({
+            title: 'Новая группа',
+            showBack: true,
+            onBack: () => window.history.back()
         });
-      });
-      
-      function updateCreateButton() {
-        const hasName = window.groupName && window.groupName.trim();
-        const selectedCount = contacts.filter(c => c.selected).length;
-        const btn = document.getElementById('create-group-btn');
-        btn.disabled = !(hasName && selectedCount > 0);
-      }
-      
-      // Create group
-      document.getElementById('create-group-btn').addEventListener('click', () => {
-        console.log('Create group:', {
-          name: window.groupName,
-          members: contacts.filter(c => c.selected).map(c => c.id)
-        });
-        window.location.hash = '/chats';
-      });
-    });
-  </script>
+        document.getElementById('header-mount').appendChild(header.render());
+
+        // 2. Логика превью аватара
+        const fileInput = document.getElementById('file-input');
+        const preview = document.getElementById('preview');
+
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (f) => {
+                    preview.innerHTML = `<img src="${f.target.result}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                    preview.style.borderStyle = 'solid';
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        // 3. Рендер контактов и логика выбора
+        const mockContacts = [
+            { id: 1, name: 'Александр', status: 'в сети' },
+            { id: 2, name: 'Илон Маск', status: 'был(а) недавно' },
+            { id: 3, name: 'Дмитрий', status: 'в сети' },
+            { id: 4, name: 'Анна', status: 'был(а) вчера' }
+        ];
+
+        let selectedIds = new Set();
+        const contactsList = document.getElementById('contacts-list');
+        const fabDone = document.getElementById('btn-create');
+        const countDisplay = document.getElementById('selected-count');
+        const groupNameInput = document.getElementById('group-name');
+
+        function renderContacts() {
+            contactsList.innerHTML = mockContacts.map(c => `
+                <div class="contact-item" data-id="${c.id}">
+                    <img src="https://i.pravatar.cc/150?u=${c.id}" class="contact-avatar" alt="avatar">
+                    <div class="contact-info">
+                        <div class="contact-name">${c.name}</div>
+                        <div class="contact-status">${c.status}</div>
+                    </div>
+                    <div class="crane-checkbox"></div>
+                </div>
+            `).join('');
+
+            // Привязка событий
+            document.querySelectorAll('.contact-item').forEach(item => {
+                item.onclick = () => toggleSelection(item, parseInt(item.dataset.id));
+            });
+        }
+
+        function toggleSelection(element, id) {
+            if (selectedIds.has(id)) {
+                selectedIds.delete(id);
+                element.classList.remove('selected');
+            } else {
+                selectedIds.add(id);
+                element.classList.add('selected');
+            }
+            
+            updateUI();
+        }
+
+        function updateUI() {
+            countDisplay.textContent = selectedIds.size;
+            
+            // Кнопка создания появляется только если есть имя и хотя бы 1 участник
+            if (selectedIds.size > 0 && groupNameInput.value.trim().length > 0) {
+                fabDone.classList.add('visible');
+            } else {
+                fabDone.classList.remove('visible');
+            }
+        }
+
+        groupNameInput.addEventListener('input', updateUI);
+
+        fabDone.onclick = () => {
+            const groupData = {
+                name: groupNameInput.value.trim(),
+                members: Array.from(selectedIds)
+            };
+            console.log('Создание группы:', groupData);
+            // API вызов создания группы и редирект в новый чат
+            window.location.href = 'chat.html?id=new_group';
+        };
+
+        renderContacts();
+    </script>
 </body>
 </html>
