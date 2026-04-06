@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оформление - CraneApp</title>
+    
+    <!-- ОБЩИЙ СКРИПТ ТЕМЫ -->
+    <script src="../../scripts/theme.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #121212;
+            --bg-tertiary: #1E1E1E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+            --border-color: #1E1E1E;
+            --accent-color: #FF007F;
+            --accent-gradient: linear-gradient(135deg, #FF007F, #9D00FF);
+        }
+        [data-theme="light"] {
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F5F5F5;
+            --bg-tertiary: #EEEEEE;
+            --text-primary: #000000;
+            --text-secondary: #666666;
+            --border-color: #DDDDDD;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: var(--bg-primary); 
+            color: var(--text-primary); 
+            font-family: system-ui; 
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .header { padding: 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 16px; }
+        .back { background: none; border: none; color: var(--text-primary); font-size: 24px; cursor: pointer; }
+        .section { margin: 16px; background: var(--bg-secondary); border-radius: 16px; overflow: hidden; }
+        .item { padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .item:last-child { border-bottom: none; }
+        .color-option { 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            border: 3px solid transparent; 
+            transition: transform 0.2s, border-color 0.2s; 
+        }
+        .color-option:hover { transform: scale(1.1); }
+        .color-option.selected { 
+            border-color: var(--text-primary); 
+            box-shadow: 0 0 0 2px var(--bg-secondary);
+        }
+        select { background:var(--bg-tertiary);color:var(--text-primary);border:none;padding:8px 12px;border-radius:8px;font-size:14px; outline: none; }
+        .preview { margin: 16px; padding: 20px; background: var(--bg-secondary); border-radius: 16px; text-align: center; }
+        .preview-btn { padding: 12px 24px; background: var(--accent-gradient); border: none; border-radius: 12px; color: #fff; cursor: pointer; margin-top: 12px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="back" onclick="history.back()">←</button>
+        <h2>Оформление</h2>
+    </div>
+    
+    <div class="preview">
+        <h3>Предпросмотр</h3>
+        <p style="color:var(--text-secondary);margin:8px 0;">Изменения применяются сразу на всех страницах</p>
+        <button class="preview-btn">Пример кнопки</button>
+    </div>
+    
+    <div class="section">
+        <div class="item">
+            <div>Тема</div>
+            <select id="themeSelect" onchange="changeTheme(this.value)">
+                <option value="dark">Тёмная</option>
+                <option value="light">Светлая</option>
+            </select>
+        </div>
+        <div class="item">
+            <div>Цвет акцента</div>
+            <div style="display:flex;gap:8px;" id="colorOptions">
+                <div class="color-option" style="background:#FF007F" data-color="#FF007F" onclick="selectColor(this)"></div>
+                <div class="color-option" style="background:#9D00FF" data-color="#9D00FF" onclick="selectColor(this)"></div>
+                <div class="color-option" style="background:#0088FF" data-color="#0088FF" onclick="selectColor(this)"></div>
+                <div class="color-option" style="background:#00AA00" data-color="#00AA00" onclick="selectColor(this)"></div>
+                <div class="color-option" style="background:#FF8800" data-color="#FF8800" onclick="selectColor(this)"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === ЗАГРУЗКА НАСТРОЕК ПРИ СТАРТЕ ===
+        const defaultSettings = { theme: 'dark', accentColor: '#FF007F' };
+        let settings = JSON.parse(localStorage.getItem('craneapp_settings') || '{}');
+        settings = { ...defaultSettings, ...settings };
+
+        // === ПРИМЕНЯЕМ ТЕМУ СРАЗУ ПРИ ЗАГРУЗКЕ ===
+        document.documentElement.setAttribute('data-theme', settings.theme);
+        document.documentElement.style.setProperty('--accent-color', settings.accentColor);
+        document.documentElement.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${settings.accentColor}, #9D00FF)`);
+
+        // === УСТАНАВЛИВАЕМ ЗНАЧЕНИЯ В UI ===
+        document.getElementById('themeSelect').value = settings.theme;
+
+        // === ПРАВИЛЬНО ПОДСВЕЧИВАЕМ ВЫБРАННЫЙ ЦВЕТ ===
+        function updateColorSelection() {
+            const savedColor = settings.accentColor.toUpperCase();
+            document.querySelectorAll('.color-option').forEach(el => {
+                const optionColor = el.getAttribute('data-color').toUpperCase();
+                // Сравниваем через data-атрибут (надёжно!)
+                if (optionColor === savedColor) {
+                    el.classList.add('selected');
+                } else {
+                    el.classList.remove('selected');
+                }
+            });
+        }
+
+        // Вызываем сразу после загрузки
+        updateColorSelection();
+
+        // === СМЕНА ТЕМЫ ===
+        window.changeTheme = function(theme) {
+            settings.theme = theme;
+            localStorage.setItem('craneapp_settings', JSON.stringify(settings));
+            
+            // Применяем сразу
+            document.documentElement.setAttribute('data-theme', theme);
+        };
+
+        // === ВЫБОР ЦВЕТА ===
+        window.selectColor = function(el) {
+            const color = el.getAttribute('data-color');
+            
+            // Убираем выделение со всех
+            document.querySelectorAll('.color-option').forEach(c => c.classList.remove('selected'));
+            
+            // Выделяем текущий
+            el.classList.add('selected');
+            
+            // Сохраняем
+            settings.accentColor = color;
+            localStorage.setItem('craneapp_settings', JSON.stringify(settings));
+            
+            // Применяем сразу
+            document.documentElement.style.setProperty('--accent-color', color);
+            document.documentElement.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${color}, #9D00FF)`);
+        };
+
+        // === ОБНОВЛЕНИЕ ПРИ ВОЗВРАТЕ НА СТРАНИЦУ ===
+        window.addEventListener('pageshow', () => {
+            settings = JSON.parse(localStorage.getItem('craneapp_settings') || '{}');
+            settings = { ...defaultSettings, ...settings };
+            
+            document.getElementById('themeSelect').value = settings.theme;
+            document.documentElement.setAttribute('data-theme', settings.theme);
+            document.documentElement.style.setProperty('--accent-color', settings.accentColor);
+            document.documentElement.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${settings.accentColor}, #9D00FF)`);
+            
+            updateColorSelection();
+        });
+    </script>
+</body>
+</html>

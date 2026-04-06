@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Конфиденциальность - CraneApp</title>
+    <script src="../../scripts/theme.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #121212;
+            --bg-tertiary: #1E1E1E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+            --text-muted: #666666;
+            --border-color: #1E1E1E;
+            --accent-color: #FF007F;
+            --accent-gradient: linear-gradient(135deg, #FF007F, #9D00FF);
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        
+        [data-theme="light"] {
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F5F5F5;
+            --bg-tertiary: #EEEEEE;
+            --text-primary: #000000;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --border-color: #DDDDDD;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        html, body { height: 100%; overflow-x: hidden; }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            padding-top: var(--safe-area-top);
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        .header {
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 22px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .back-btn:active { background: rgba(255,255,255,0.1); }
+        .header-title { font-size: 17px; font-weight: 700; }
+        
+        .content { padding: 16px 0; }
+        
+        .section {
+            background: var(--bg-secondary);
+            margin: 0 0 12px 0;
+        }
+        
+        @media (min-width: 768px) {
+            .section { border-radius: 12px; margin: 0 8px 12px 8px; }
+        }
+        
+        .section-header {
+            padding: 12px 16px 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .item {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        
+        .item:last-child { border-bottom: none; }
+        .item:active { background: var(--bg-tertiary); }
+        
+        .item-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+        
+        .item-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .item-text { flex: 1; }
+        .item-title { font-size: 15px; margin-bottom: 2px; }
+        .item-subtitle { font-size: 12px; color: var(--text-secondary); }
+        
+        .item-value { color: var(--text-secondary); font-size: 14px; margin-right: 8px; }
+        .item-arrow { color: var(--text-muted); font-size: 16px; }
+        
+        .toggle-switch {
+            width: 42px;
+            height: 26px;
+            border-radius: 13px;
+            background: #333333;
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+        
+        .toggle-switch.active { background: var(--accent-gradient); }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+        
+        .toggle-switch.active::after { transform: translateX(16px); }
+        
+        .toast-container {
+            position: fixed;
+            bottom: calc(70px + var(--safe-area-bottom));
+            left: 12px;
+            right: 12px;
+            z-index: 10002;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            pointer-events: none;
+        }
+        
+        @media (min-width: 768px) {
+            .toast-container { left: auto; right: 20px; bottom: 20px; }
+        }
+        
+        .toast {
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid var(--accent-color);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            font-size: 13px;
+        }
+        
+        .toast.success { border-left-color: #00FF88; }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .blocked-user {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            gap: 12px;
+        }
+        
+        .blocked-user:last-child { border-bottom: none; }
+        
+        .blocked-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #FFF;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        
+        .blocked-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .blocked-info { flex: 1; }
+        .blocked-name { font-size: 14px; font-weight: 600; }
+        .blocked-username { font-size: 12px; color: var(--text-secondary); }
+        
+        .unblock-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .unblock-btn:active { background: var(--bg-tertiary); }
+        
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+        
+        .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+        
+        .loading-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+        
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Picker Modal */
+        .picker-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .picker-overlay.active { display: block; }
+        
+        .picker-modal {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-radius: 20px 20px 0 0;
+            z-index: 1001;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            max-height: 50vh;
+            overflow-y: auto;
+            padding-bottom: var(--safe-area-bottom);
+        }
+        
+        .picker-modal.active { transform: translateY(0); }
+        
+        .picker-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .picker-title { font-size: 16px; font-weight: 700; }
+        
+        .picker-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .picker-option {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .picker-option:last-child { border-bottom: none; }
+        .picker-option:active { background: var(--bg-tertiary); }
+        .picker-option.selected { color: var(--accent-color); }
+        .picker-option-check { font-size: 18px; }
+    </style>
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- Picker Modal -->
+    <div class="picker-overlay" id="pickerOverlay" onclick="closePicker()"></div>
+    <div class="picker-modal" id="pickerModal">
+        <div class="picker-header">
+            <span class="picker-title" id="pickerTitle">Выберите</span>
+            <button class="picker-close" onclick="closePicker()">×</button>
+        </div>
+        <div class="picker-options" id="pickerOptions"></div>
+    </div>
+    
+    <div class="header">
+        <button class="back-btn" onclick="history.back()">←</button>
+        <span class="header-title">Конфиденциальность</span>
+    </div>
+    
+    <div class="content">
+        <div class="section-header">Видимость</div>
+        <div class="section">
+            <div class="item" onclick="showPicker('lastSeen', ['all', 'contacts', 'none'])">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(0,255,0,0.2);">👁</div>
+                    <div class="item-text">
+                        <div class="item-title">Последний визит</div>
+                        <div class="item-subtitle">Кто видит ваш статус онлайн</div>
+                    </div>
+                </div>
+                <span class="item-value" id="lastSeenValue">Все</span>
+                <span class="item-arrow">›</span>
+            </div>
+            <div class="item" onclick="showPicker('phoneVisibility', ['all', 'contacts', 'none'])">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(42,171,238,0.2);">📱</div>
+                    <div class="item-text">
+                        <div class="item-title">Номер телефона</div>
+                        <div class="item-subtitle">Кто видит ваш номер</div>
+                    </div>
+                </div>
+                <span class="item-value" id="phoneVisibilityValue">Мои контакты</span>
+                <span class="item-arrow">›</span>
+            </div>
+            <div class="item" onclick="showPicker('photoVisibility', ['all', 'contacts', 'none'])">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(255,165,0,0.2);">🖼</div>
+                    <div class="item-text">
+                        <div class="item-title">Фото профиля</div>
+                        <div class="item-subtitle">Кто видит вашу аватарку</div>
+                    </div>
+                </div>
+                <span class="item-value" id="photoVisibilityValue">Все</span>
+                <span class="item-arrow">›</span>
+            </div>
+        </div>
+        
+        <div class="section-header">Сообщения</div>
+        <div class="section">
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(255,0,127,0.2);">✉</div>
+                    <div class="item-text">
+                        <div class="item-title">Сообщения от незнакомцев</div>
+                        <div class="item-subtitle">Получать сообщения от всех</div>
+                    </div>
+                </div>
+                <div class="toggle-switch active" id="toggleStrangers" onclick="toggleSetting(this, 'messagesFromStrangers')"></div>
+            </div>
+            <div class="item" onclick="showPicker('groupsAdd', ['all', 'contacts', 'none'])">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(157,0,255,0.2);">👥</div>
+                    <div class="item-text">
+                        <div class="item-title">Добавление в группы</div>
+                        <div class="item-subtitle">Кто может добавлять вас в группы</div>
+                    </div>
+                </div>
+                <span class="item-value" id="groupsValue">Все</span>
+                <span class="item-arrow">›</span>
+            </div>
+        </div>
+        
+        <div class="section-header">Безопасность</div>
+        <div class="section">
+            <a href="./passcode.html" class="item" style="text-decoration:none;color:inherit;">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(255,165,0,0.2);">🔐</div>
+                    <div class="item-text">
+                        <div class="item-title">Код-пароль</div>
+                        <div class="item-subtitle">Защитите приложение паролем</div>
+                    </div>
+                </div>
+                <span class="item-value" id="passcodeValue">Выкл</span>
+                <span class="item-arrow">›</span>
+            </a>
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(0,255,0,0.2);">🔒</div>
+                    <div class="item-text">
+                        <div class="item-title">Двухфакторная аутентификация</div>
+                        <div class="item-subtitle">Дополнительная защита</div>
+                    </div>
+                </div>
+                <div class="toggle-switch" id="toggle2FA" onclick="toggleSetting(this, 'twoFactorAuth')"></div>
+            </div>
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(255,75,75,0.2);">🗑</div>
+                    <div class="item-text">
+                        <div class="item-title">Автоудаление аккаунта</div>
+                        <div class="item-subtitle">Если вы не заходили 6 месяцев</div>
+                    </div>
+                </div>
+                <div class="toggle-switch active" id="toggleAutoDelete" onclick="toggleSetting(this, 'autoDeleteAccount')"></div>
+            </div>
+        </div>
+        
+        <div class="section-header">Заблокированные пользователи</div>
+        <div class="section" id="blockedList">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <div>Загрузка...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('craneapp_auth_token');
+        
+        let settings = {
+            lastSeen: 'all',
+            phoneVisibility: 'contacts',
+            photoVisibility: 'all',
+            messagesFromStrangers: true,
+            groupsAdd: 'all',
+            twoFactorAuth: false,
+            autoDeleteAccount: true
+        };
+        
+        let blockedUsers = [];
+        
+        const valueLabels = {
+            all: 'Все',
+            contacts: 'Мои контакты',
+            none: 'Никто'
+        };
+        
+        // Загрузка настроек с сервера
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/v1/users/privacy', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    settings = { ...settings, ...data.privacy };
+                }
+            } catch (e) {
+                console.warn('Load privacy settings failed:', e);
+            }
+            
+            // Загружаем заблокированных
+            await loadBlockedUsers();
+            
+            updateUI();
+        }
+        
+        async function loadBlockedUsers() {
+            try {
+                const res = await fetch('/api/v1/users/blocked', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    blockedUsers = data.blocked || [];
+                }
+            } catch (e) {
+                console.warn('Load blocked users failed:', e);
+            }
+        }
+        
+        function updateUI() {
+            document.getElementById('lastSeenValue').textContent = valueLabels[settings.lastSeen] || 'Все';
+            document.getElementById('phoneVisibilityValue').textContent = valueLabels[settings.phoneVisibility] || 'Мои контакты';
+            document.getElementById('photoVisibilityValue').textContent = valueLabels[settings.photoVisibility] || 'Все';
+            document.getElementById('groupsValue').textContent = valueLabels[settings.groupsAdd] || 'Все';
+            
+            updateToggle('toggleStrangers', settings.messagesFromStrangers);
+            updateToggle('toggle2FA', settings.twoFactorAuth);
+            updateToggle('toggleAutoDelete', settings.autoDeleteAccount);
+            
+            renderBlockedUsers();
+        }
+        
+        function updateToggle(id, value) {
+            const el = document.getElementById(id);
+            if (value) el.classList.add('active');
+            else el.classList.remove('active');
+        }
+        
+        function renderBlockedUsers() {
+            const container = document.getElementById('blockedList');
+            
+            if (blockedUsers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🚫</div>
+                        <div>Нет заблокированных пользователей</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = blockedUsers.map(u => `
+                <div class="blocked-user" data-id="${u.id}">
+                    <div class="blocked-avatar">
+                        ${u.avatarUrl ? '<img src="' + u.avatarUrl + '" alt="">' : (u.firstName || u.username || '?')[0].toUpperCase()}
+                    </div>
+                    <div class="blocked-info">
+                        <div class="blocked-name">${u.firstName || u.username}</div>
+                        <div class="blocked-username">@${u.username}</div>
+                    </div>
+                    <button class="unblock-btn" onclick="unblockUser('${u.id}')">Разблокировать</button>
+                </div>
+            `).join('');
+        }
+        
+        // Переключение тогла
+        async function toggleSetting(el, key) {
+            el.classList.toggle('active');
+            const value = el.classList.contains('active');
+            settings[key] = value;
+            
+            await saveSettings();
+            showToast('success', value ? 'Включено' : 'Выключено', '✓');
+        }
+        
+        // Сохранение настроек
+        async function saveSettings() {
+            try {
+                await fetch('/api/v1/users/privacy', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(settings)
+                });
+            } catch (e) {
+                console.warn('Save privacy settings failed:', e);
+            }
+            
+            // Также сохраняем локально
+            localStorage.setItem('craneapp_privacy_settings', JSON.stringify(settings));
+        }
+        
+        // Picker
+        let currentPickerKey = null;
+        
+        function showPicker(key, options) {
+            currentPickerKey = key;
+            const overlay = document.getElementById('pickerOverlay');
+            const modal = document.getElementById('pickerModal');
+            const optionsEl = document.getElementById('pickerOptions');
+            
+            const titles = {
+                lastSeen: 'Последний визит',
+                phoneVisibility: 'Номер телефона',
+                photoVisibility: 'Фото профиля',
+                groupsAdd: 'Добавление в группы'
+            };
+            
+            document.getElementById('pickerTitle').textContent = titles[key] || 'Выберите';
+            
+            optionsEl.innerHTML = options.map(opt => `
+                <div class="picker-option ${settings[key] === opt ? 'selected' : ''}" onclick="selectOption('${opt}')">
+                    <span>${valueLabels[opt] || opt}</span>
+                    ${settings[key] === opt ? '<span class="picker-option-check">✓</span>' : ''}
+                </div>
+            `).join('');
+            
+            overlay.classList.add('active');
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+        
+        async function selectOption(value) {
+            settings[currentPickerKey] = value;
+            
+            const valueMap = {
+                lastSeen: 'lastSeenValue',
+                phoneVisibility: 'phoneVisibilityValue',
+                photoVisibility: 'photoVisibilityValue',
+                groupsAdd: 'groupsValue'
+            };
+            
+            if (valueMap[currentPickerKey]) {
+                document.getElementById(valueMap[currentPickerKey]).textContent = valueLabels[value];
+            }
+            
+            await saveSettings();
+            closePicker();
+            showToast('success', 'Сохранено', '✓');
+        }
+        
+        function closePicker() {
+            document.getElementById('pickerOverlay').classList.remove('active');
+            document.getElementById('pickerModal').classList.remove('active');
+        }
+        
+        // Разблокировка пользователя
+        async function unblockUser(userId) {
+            if (!confirm('Разблокировать пользователя?')) return;
+            
+            try {
+                const res = await fetch('/api/v1/users/blocked/' + userId, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (res.ok) {
+                    blockedUsers = blockedUsers.filter(u => u.id !== userId);
+                    renderBlockedUsers();
+                    showToast('success', 'Пользователь разблокирован', '✓');
+                }
+            } catch (e) {
+                showToast('error', 'Ошибка', '❌');
+            }
+        }
+        
+        // Toast
+        function showToast(type, message, icon) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = '<span>' + icon + '</span><span>' + message + '</span>';
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+        
+        // Инициализация
+        loadSettings();
+    </script>
+</body>
+</html>

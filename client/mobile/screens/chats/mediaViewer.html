@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<!-- ТЕМА И НАСТРОЙКИ -->
+<script src="../scripts/theme.js"></script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Просмотр медиа - CraneApp</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background-color: #000000; color: #FFFFFF;
+            font-family: system-ui, -apple-system, sans-serif;
+            height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+        .header {
+            position: absolute; top: 0; left: 0; right: 0;
+            padding: 16px; background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100;
+        }
+        .header-btn {
+            background: none; border: none; color: #FFFFFF;
+            font-size: 24px; cursor: pointer; width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; transition: background 0.2s;
+        }
+        .header-btn:hover { background: rgba(255,255,255,0.1); }
+        .media-container {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .media-content {
+            max-width: 100%; max-height: 100%;
+            object-fit: contain; cursor: zoom-in;
+        }
+        .media-content.zoomed { cursor: zoom-out; }
+        .caption {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 60px 16px 80px;
+            background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+            font-size: 15px; line-height: 1.5;
+        }
+        .actions-bar {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 16px; background: rgba(0,0,0,0.8);
+            display: flex; justify-content: center; gap: 24px;
+        }
+        .action-btn {
+            background: none; border: none; color: #FFFFFF;
+            font-size: 24px; cursor: pointer; display: flex;
+            flex-direction: column; align-items: center; gap: 4px;
+        }
+        .action-btn span { font-size: 12px; color: #B0B0B0; }
+        .action-btn:hover { color: #FF007F; }
+        .loading {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px; color: #B0B0B0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="header-btn" onclick="history.back()">✕</button>
+        <div style="font-weight: 600;" id="mediaTitle">Медиа</div>
+        <button class="header-btn" onclick="alert('Меню')">⋮</button>
+    </div>
+
+    <div class="media-container" id="mediaContainer">
+        <div class="loading" id="loading">Загрузка...</div>
+        <img class="media-content" id="mediaContent" src="" alt="Media">
+        <div class="caption" id="caption"></div>
+    </div>
+
+    <div class="actions-bar">
+        <button class="action-btn" onclick="alert('Ответить')">↩️<span>Ответ</span></button>
+        <button class="action-btn" onclick="alert('Переслать')">⏩<span>Переслать</span></button>
+        <button class="action-btn" onclick="alert('Сохранить')">⬇️<span>Скачать</span></button>
+        <button class="action-btn" onclick="alert('Удалить')">🗑️<span>Удалить</span></button>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const mediaUrl = urlParams.get('url');
+        const caption = urlParams.get('caption') || '';
+
+        const img = document.getElementById('mediaContent');
+        const loading = document.getElementById('loading');
+        const captionEl = document.getElementById('caption');
+        const container = document.getElementById('mediaContainer');
+
+        let isZoomed = false;
+
+        if (mediaUrl) {
+            img.src = mediaUrl;
+            img.onload = () => { loading.style.display = 'none'; };
+            img.onerror = () => { 
+                loading.textContent = 'Ошибка загрузки';
+                loading.style.color = '#FF4B4B';
+            };
+        } else {
+            // Demo mode
+            img.src = 'https://via.placeholder.com/800x600/1E1E1E/FF007F?text=CraneApp+Media';
+            loading.style.display = 'none';
+        }
+
+        if (caption) {
+            captionEl.textContent = caption;
+        } else {
+            captionEl.style.display = 'none';
+        }
+
+        // Zoom functionality
+        img.addEventListener('click', () => {
+            isZoomed = !isZoomed;
+            if (isZoomed) {
+                img.classList.add('zoomed');
+                img.style.transform = 'scale(2)';
+                img.style.transition = 'transform 0.3s ease';
+            } else {
+                img.classList.remove('zoomed');
+                img.style.transform = 'scale(1)';
+            }
+        });
+
+        // Swipe to close (mobile)
+        let touchStartY = 0;
+        let touchEndY = 0;
+
+        container.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        container.addEventListener('touchend', (e) => {
+            touchEndY = e.changedTouches[0].clientY;
+            const diff = touchStartY - touchEndY;
+            if (diff > 100) { history.back(); } // Swipe up to close
+        }, { passive: true });
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') history.back();
+            if (e.key === '+' || e.key === '=') {
+                isZoomed = true;
+                img.style.transform = 'scale(2)';
+            }
+            if (e.key === '-') {
+                isZoomed = false;
+                img.style.transform = 'scale(1)';
+            }
+        });
+    </script>
+</body>
+</html>

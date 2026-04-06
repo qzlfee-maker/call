@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Папки с чатами - CraneApp</title>
+    <script src="../../scripts/theme.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #121212;
+            --bg-tertiary: #1E1E1E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+            --text-muted: #666666;
+            --border-color: #1E1E1E;
+            --accent-color: #FF007F;
+            --accent-gradient: linear-gradient(135deg, #FF007F, #9D00FF);
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        
+        [data-theme="light"] {
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F5F5F5;
+            --bg-tertiary: #EEEEEE;
+            --text-primary: #000000;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --border-color: #DDDDDD;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; overflow-x: hidden; }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            padding-top: var(--safe-area-top);
+        }
+        
+        .header {
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 22px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .back-btn:active { background: rgba(255,255,255,0.1); }
+        .header-title { font-size: 17px; font-weight: 700; }
+        
+        .add-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            font-size: 24px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .add-btn:active { background: rgba(255,0,127,0.1); }
+        
+        .content { padding: 16px 0; }
+        
+        .section-header {
+            padding: 12px 16px 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        
+        .section {
+            background: var(--bg-secondary);
+            margin: 0;
+        }
+        
+        @media (min-width: 768px) {
+            .section { border-radius: 12px; margin: 0 8px; }
+        }
+        
+        .folder-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        
+        .folder-item:last-child { border-bottom: none; }
+        .folder-item:active { background: var(--bg-tertiary); }
+        
+        .folder-left { display: flex; align-items: center; gap: 12px; }
+        
+        .folder-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        
+        .folder-info { }
+        .folder-name { font-size: 15px; font-weight: 500; }
+        .folder-count { font-size: 12px; color: var(--text-secondary); }
+        
+        .folder-arrow { color: var(--text-muted); font-size: 16px; }
+        
+        .create-folder-btn {
+            width: calc(100% - 16px);
+            margin: 8px;
+            padding: 14px;
+            border-radius: 12px;
+            border: 2px dashed var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .create-folder-btn:active { background: var(--bg-tertiary); }
+        
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+        
+        .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .modal-overlay.active { display: block; }
+        
+        .modal {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-radius: 20px 20px 0 0;
+            z-index: 1001;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            padding-bottom: var(--safe-area-bottom);
+        }
+        
+        .modal.active { transform: translateY(0); }
+        
+        .modal-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title { font-size: 17px; font-weight: 700; }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .modal-body { padding: 16px; }
+        
+        .input-group { margin-bottom: 16px; }
+        
+        .input-label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 15px;
+            outline: none;
+        }
+        
+        .input-field:focus { border-color: var(--accent-color); }
+        
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+        
+        .icon-option {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: var(--bg-tertiary);
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .icon-option.selected { border-color: var(--accent-color); }
+        .icon-option:active { transform: scale(0.95); }
+        
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+        
+        .color-option {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+        }
+        
+        .color-option.selected { border-color: var(--text-primary); }
+        .color-option:active { transform: scale(0.95); }
+        
+        .save-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: var(--accent-gradient);
+            color: #FFF;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        
+        .save-btn:active { opacity: 0.85; }
+        
+        .delete-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #FF4B4B;
+            background: transparent;
+            color: #FF4B4B;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        
+        .delete-btn:active { background: rgba(255,75,75,0.1); }
+        
+        .toast-container {
+            position: fixed;
+            bottom: calc(70px + var(--safe-area-bottom));
+            left: 12px;
+            right: 12px;
+            z-index: 10002;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            pointer-events: none;
+        }
+        
+        .toast {
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid #00FF88;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            font-size: 13px;
+        }
+        
+        .toast.error { border-left-color: #FF4B4B; }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+    <div class="modal" id="folderModal">
+        <div class="modal-header">
+            <span class="modal-title" id="modalTitle">Новая папка</span>
+            <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="input-group">
+                <label class="input-label">Название</label>
+                <input type="text" class="input-field" id="folderNameInput" placeholder="Название папки" maxlength="20">
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Иконка</label>
+                <div class="icon-grid" id="iconGrid"></div>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Цвет</label>
+                <div class="color-grid" id="colorGrid"></div>
+            </div>
+            
+            <button class="save-btn" onclick="saveFolder()">Сохранить</button>
+            <button class="delete-btn" id="deleteFolderBtn" style="display:none;" onclick="deleteFolder()">Удалить папку</button>
+        </div>
+    </div>
+    
+    <div class="header">
+        <div class="header-left">
+            <button class="back-btn" onclick="history.back()">←</button>
+            <span class="header-title">Папки с чатами</span>
+        </div>
+        <button class="add-btn" onclick="openCreateModal()">+</button>
+    </div>
+    
+    <div class="content">
+        <div class="section-header">Ваши папки</div>
+        <div class="section" id="folderList"></div>
+        
+        <button class="create-folder-btn" onclick="openCreateModal()">
+            <span>📁</span>
+            <span>Создать папку</span>
+        </button>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('craneapp_auth_token');
+        
+        const icons = ['📁', '💬', '👥', '⭐', '🔔', '📌', '🏠', '💼', '🎮', '🎵', '📸', '🎬'];
+        const colors = ['#FF007F', '#9D00FF', '#0088FF', '#00AA00', '#FF8800', '#FF4B4B'];
+        
+        let folders = [];
+        let editingFolderId = null;
+        let selectedIcon = '📁';
+        let selectedColor = '#FF007F';
+        
+        async function loadFolders() {
+            try {
+                const res = await fetch('/api/v1/users/folders', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    folders = data.folders || [];
+                }
+            } catch (e) {
+                folders = JSON.parse(localStorage.getItem('craneapp_folders') || '[]');
+            }
+            
+            renderFolders();
+        }
+        
+        function renderFolders() {
+            const list = document.getElementById('folderList');
+            
+            if (folders.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📁</div>
+                        <div>Нет созданных папок</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = folders.map(f => `
+                <div class="folder-item" onclick="openEditModal('${f.id}')">
+                    <div class="folder-left">
+                        <div class="folder-icon" style="background:${f.color}20;">${f.icon}</div>
+                        <div class="folder-info">
+                            <div class="folder-name">${f.name}</div>
+                            <div class="folder-count">${f.chatCount || 0} чатов</div>
+                        </div>
+                    </div>
+                    <span class="folder-arrow">›</span>
+                </div>
+            `).join('');
+        }
+        
+        function renderIconGrid() {
+            const grid = document.getElementById('iconGrid');
+            grid.innerHTML = icons.map(icon => `
+                <div class="icon-option ${icon === selectedIcon ? 'selected' : ''}" onclick="selectIcon('${icon}')">${icon}</div>
+            `).join('');
+        }
+        
+        function renderColorGrid() {
+            const grid = document.getElementById('colorGrid');
+            grid.innerHTML = colors.map(color => `
+                <div class="color-option ${color === selectedColor ? 'selected' : ''}" style="background:${color};" onclick="selectColor('${color}')"></div>
+            `).join('');
+        }
+        
+        function selectIcon(icon) {
+            selectedIcon = icon;
+            renderIconGrid();
+        }
+        
+        function selectColor(color) {
+            selectedColor = color;
+            renderColorGrid();
+        }
+        
+        function openCreateModal() {
+            editingFolderId = null;
+            selectedIcon = '📁';
+            selectedColor = '#FF007F';
+            
+            document.getElementById('modalTitle').textContent = 'Новая папка';
+            document.getElementById('folderNameInput').value = '';
+            document.getElementById('deleteFolderBtn').style.display = 'none';
+            
+            renderIconGrid();
+            renderColorGrid();
+            
+            document.getElementById('modalOverlay').classList.add('active');
+            setTimeout(() => document.getElementById('folderModal').classList.add('active'), 10);
+            document.getElementById('folderNameInput').focus();
+        }
+        
+        function openEditModal(folderId) {
+            const folder = folders.find(f => f.id === folderId);
+            if (!folder) return;
+            
+            editingFolderId = folderId;
+            selectedIcon = folder.icon;
+            selectedColor = folder.color;
+            
+            document.getElementById('modalTitle').textContent = 'Редактировать';
+            document.getElementById('folderNameInput').value = folder.name;
+            document.getElementById('deleteFolderBtn').style.display = 'block';
+            
+            renderIconGrid();
+            renderColorGrid();
+            
+            document.getElementById('modalOverlay').classList.add('active');
+            setTimeout(() => document.getElementById('folderModal').classList.add('active'), 10);
+        }
+        
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.getElementById('folderModal').classList.remove('active');
+        }
+        
+        async function saveFolder() {
+            const name = document.getElementById('folderNameInput').value.trim();
+            
+            if (!name) {
+                showToast('Введите название папки', '⚠️', true);
+                return;
+            }
+            
+            const folderData = {
+                id: editingFolderId || 'folder-' + Date.now(),
+                name: name,
+                icon: selectedIcon,
+                color: selectedColor,
+                chatCount: 0,
+                createdAt: new Date().toISOString()
+            };
+            
+            if (editingFolderId) {
+                const idx = folders.findIndex(f => f.id === editingFolderId);
+                if (idx >= 0) {
+                    folders[idx] = { ...folders[idx], ...folderData };
+                }
+            } else {
+                folders.push(folderData);
+            }
+            
+            // Сохраняем локально
+            localStorage.setItem('craneapp_folders', JSON.stringify(folders));
+            
+            // Отправляем на сервер
+            try {
+                await fetch('/api/v1/users/folders', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ folders })
+                });
+            } catch (e) {
+                console.warn('Save folders failed:', e);
+            }
+            
+            closeModal();
+            renderFolders();
+            showToast(editingFolderId ? 'Папка обновлена' : 'Папка создана', '✓');
+        }
+        
+        async function deleteFolder() {
+            if (!confirm('Удалить папку?')) return;
+            
+            folders = folders.filter(f => f.id !== editingFolderId);
+            
+            localStorage.setItem('craneapp_folders', JSON.stringify(folders));
+            
+            try {
+                await fetch('/api/v1/users/folders', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ folders })
+                });
+            } catch (e) {}
+            
+            closeModal();
+            renderFolders();
+            showToast('Папка удалена', '✓');
+        }
+        
+        function showToast(message, icon, isError) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast' + (isError ? ' error' : '');
+            toast.innerHTML = '<span>' + icon + '</span><span>' + message + '</span>';
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+        
+        loadFolders();
+    </script>
+</body>
+</html>

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Расширенные настройки - CraneApp</title>
+    <script src="../../scripts/theme.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #121212;
+            --bg-tertiary: #1E1E1E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+            --text-muted: #666666;
+            --border-color: #1E1E1E;
+            --accent-color: #FF007F;
+            --accent-gradient: linear-gradient(135deg, #FF007F, #9D00FF);
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        
+        [data-theme="light"] {
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F5F5F5;
+            --bg-tertiary: #EEEEEE;
+            --text-primary: #000000;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --border-color: #DDDDDD;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; overflow-x: hidden; }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            padding-top: var(--safe-area-top);
+        }
+        
+        .header {
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 22px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .back-btn:active { background: rgba(255,255,255,0.1); }
+        .header-title { font-size: 17px; font-weight: 700; }
+        
+        .content { padding: 16px 0; }
+        
+        .section-header {
+            padding: 12px 16px 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        
+        .section {
+            background: var(--bg-secondary);
+            margin: 0 0 12px 0;
+        }
+        
+        @media (min-width: 768px) {
+            .section { border-radius: 12px; margin: 0 8px 12px 8px; }
+        }
+        
+        .item {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+        
+        .item:last-child { border-bottom: none; }
+        .item:active { background: var(--bg-tertiary); }
+        
+        .item-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+        
+        .item-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .item-text { flex: 1; }
+        .item-title { font-size: 15px; }
+        .item-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+        
+        .toggle-switch {
+            width: 42px;
+            height: 26px;
+            border-radius: 13px;
+            background: #333333;
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .toggle-switch.active { background: var(--accent-gradient); }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+        
+        .toggle-switch.active::after { transform: translateX(16px); }
+        
+        .item-value { color: var(--text-secondary); font-size: 14px; margin-right: 8px; }
+        .item-arrow { color: var(--text-muted); font-size: 16px; }
+        
+        .info-card {
+            background: var(--bg-secondary);
+            margin: 0 8px 12px;
+            border-radius: 12px;
+            padding: 16px;
+            border-left: 3px solid var(--accent-color);
+        }
+        
+        .info-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+        .info-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+        
+        .danger-btn {
+            width: calc(100% - 16px);
+            margin: 8px;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #FF4B4B;
+            background: transparent;
+            color: #FF4B4B;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .danger-btn:active { background: rgba(255,75,75,0.1); }
+        
+        .toast-container {
+            position: fixed;
+            bottom: calc(70px + var(--safe-area-bottom));
+            left: 12px;
+            right: 12px;
+            z-index: 10002;
+            pointer-events: none;
+        }
+        
+        .toast {
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid #00FF88;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            font-size: 13px;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <div class="header">
+        <button class="back-btn" onclick="history.back()">←</button>
+        <span class="header-title">Расширенные настройки</span>
+    </div>
+    
+    <div class="content">
+        <div class="info-card">
+            <div class="info-title">⚠️ Внимание</div>
+            <div class="info-text">Эти настройки предназначены для опытных пользователей. Изменение их может повлиять на работу приложения.</div>
+        </div>
+        
+        <div class="section-header">Соединение</div>
+        <div class="section">
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(0,255,0,0.2);">🔄</div>
+                    <div class="item-text">
+                        <div class="item-title">Автоматическое переподключение</div>
+                    </div>
+                </div>
+                <div class="toggle-switch active" id="toggleReconnect" onclick="toggleSetting(this, 'autoReconnect')"></div>
+            </div>
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(42,171,238,0.2);">⚡</div>
+                    <div class="item-text">
+                        <div class="item-title">Быстрое соединение</div>
+                        <div class="item-subtitle">Использовать несколько подключений</div>
+                    </div>
+                </div>
+                <div class="toggle-switch active" id="toggleFastConnect" onclick="toggleSetting(this, 'fastConnection')"></div>
+            </div>
+            <div class="item" onclick="showPicker('connectionType')">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(157,0,255,0.2);">🌐</div>
+                    <div class="item-text">
+                        <div class="item-title">Тип соединения</div>
+                    </div>
+                </div>
+                <span class="item-value" id="connectionTypeValue">Авто</span>
+                <span class="item-arrow">›</span>
+            </div>
+        </div>
+        
+        <div class="section-header">Данные</div>
+        <div class="section">
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(255,165,0,0.2);">📊</div>
+                    <div class="item-text">
+                        <div class="item-title">Сжатие данных</div>
+                        <div class="item-subtitle">Экономит трафик</div>
+                    </div>
+                </div>
+                <div class="toggle-switch active" id="toggleCompression" onclick="toggleSetting(this, 'dataCompression')"></div>
+            </div>
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(255,0,127,0.2);">💾</div>
+                    <div class="item-text">
+                        <div class="item-title">Сохранять черновики</div>
+                    </div>
+                </div>
+                <div class="toggle-switch active" id="toggleDrafts" onclick="toggleSetting(this, 'saveDrafts')"></div>
+            </div>
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(0,136,255,0.2);">📈</div>
+                    <div class="item-text">
+                        <div class="item-title">Аналитика</div>
+                        <div class="item-subtitle">Помогает улучшить приложение</div>
+                    </div>
+                </div>
+                <div class="toggle-switch" id="toggleAnalytics" onclick="toggleSetting(this, 'analytics')"></div>
+            </div>
+        </div>
+        
+        <div class="section-header">Разработчикам</div>
+        <div class="section">
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(0,255,0,0.2);">🔧</div>
+                    <div class="item-text">
+                        <div class="item-title">Режим разработчика</div>
+                    </div>
+                </div>
+                <div class="toggle-switch" id="toggleDevMode" onclick="toggleSetting(this, 'developerMode')"></div>
+            </div>
+            <div class="item" id="debugLogItem" style="display:none;">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(255,75,75,0.2);">📋</div>
+                    <div class="item-text">
+                        <div class="item-title">Отладочный лог</div>
+                    </div>
+                </div>
+                <div class="toggle-switch" id="toggleDebugLog" onclick="toggleSetting(this, 'debugLog')"></div>
+            </div>
+            <div class="item" onclick="exportData()">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(255,215,0,0.2);">📤</div>
+                    <div class="item-text">
+                        <div class="item-title">Экспорт данных</div>
+                    </div>
+                </div>
+                <span class="item-arrow">›</span>
+            </div>
+        </div>
+        
+        <div class="section-header">Медиа</div>
+        <div class="section">
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(255,165,0,0.2);">🎬</div>
+                    <div class="item-text">
+                        <div class="item-title">Аппаратное ускорение</div>
+                    </div>
+                </div>
+                <div class="toggle-switch active" id="toggleHwAccel" onclick="toggleSetting(this, 'hardwareAcceleration')"></div>
+            </div>
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(157,0,255,0.2);">🖼</div>
+                    <div class="item-text">
+                        <div class="item-title">Автопроигрывание GIF</div>
+                    </div>
+                </div>
+                <div class="toggle-switch active" id="toggleGif" onclick="toggleSetting(this, 'autoplayGifs')"></div>
+            </div>
+        </div>
+        
+        <button class="danger-btn" onclick="resetSettings()">Сбросить все настройки</button>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('craneapp_auth_token');
+        
+        let settings = {
+            autoReconnect: true,
+            fastConnection: true,
+            connectionType: 'auto',
+            dataCompression: true,
+            saveDrafts: true,
+            analytics: false,
+            developerMode: false,
+            debugLog: false,
+            hardwareAcceleration: true,
+            autoplayGifs: true
+        };
+        
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/v1/users/advanced-settings', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    settings = { ...settings, ...data.settings };
+                }
+            } catch (e) {
+                const local = JSON.parse(localStorage.getItem('craneapp_advanced_settings') || '{}');
+                settings = { ...settings, ...local };
+            }
+            
+            updateUI();
+        }
+        
+        function updateUI() {
+            updateToggle('toggleReconnect', settings.autoReconnect);
+            updateToggle('toggleFastConnect', settings.fastConnection);
+            updateToggle('toggleCompression', settings.dataCompression);
+            updateToggle('toggleDrafts', settings.saveDrafts);
+            updateToggle('toggleAnalytics', settings.analytics);
+            updateToggle('toggleDevMode', settings.developerMode);
+            updateToggle('toggleDebugLog', settings.debugLog);
+            updateToggle('toggleHwAccel', settings.hardwareAcceleration);
+            updateToggle('toggleGif', settings.autoplayGifs);
+            
+            const connLabels = { auto: 'Авто', ipv4: 'IPv4', ipv6: 'IPv6' };
+            document.getElementById('connectionTypeValue').textContent = connLabels[settings.connectionType] || 'Авто';
+            
+            document.getElementById('debugLogItem').style.display = settings.developerMode ? 'flex' : 'none';
+        }
+        
+        function updateToggle(id, value) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (value) el.classList.add('active');
+            else el.classList.remove('active');
+        }
+        
+        async function toggleSetting(el, key) {
+            el.classList.toggle('active');
+            settings[key] = el.classList.contains('active');
+            
+            if (key === 'developerMode') {
+                document.getElementById('debugLogItem').style.display = settings.developerMode ? 'flex' : 'none';
+            }
+            
+            await saveSettings();
+            showToast(settings[key] ? 'Включено' : 'Выключено', '✓');
+        }
+        
+        function showPicker(type) {
+            if (type === 'connectionType') {
+                const options = [
+                    { value: 'auto', label: 'Авто' },
+                    { value: 'ipv4', label: 'IPv4' },
+                    { value: 'ipv6', label: 'IPv6' }
+                ];
+                
+                let html = options.map(o => `
+                    <div class="item ${o.value === settings.connectionType ? 'selected' : ''}" onclick="selectConnectionType('${o.value}')" style="${o.value === settings.connectionType ? 'background:rgba(255,0,127,0.1);' : ''}">
+                        <span>${o.label}</span>
+                        ${o.value === settings.connectionType ? '<span style="color:var(--accent-color);">✓</span>' : ''}
+                    </div>
+                `).join('');
+                
+                showPickerModal('Тип соединения', html);
+            }
+        }
+        
+        async function selectConnectionType(value) {
+            settings.connectionType = value;
+            await saveSettings();
+            updateUI();
+            closePickerModal();
+            showToast('Сохранено', '✓');
+        }
+        
+        async function exportData() {
+            try {
+                const res = await fetch('/api/v1/users/export', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'craneapp_data_' + new Date().toISOString().split('T')[0] + '.json';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    showToast('Данные экспортированы', '✓');
+                }
+            } catch (e) {
+                showToast('Ошибка экспорта', '❌');
+            }
+        }
+        
+        async function resetSettings() {
+            if (!confirm('Сбросить все настройки к значениям по умолчанию?')) return;
+            if (!confirm('Вы уверены? Это действие нельзя отменить.')) return;
+            
+            settings = {
+                autoReconnect: true,
+                fastConnection: true,
+                connectionType: 'auto',
+                dataCompression: true,
+                saveDrafts: true,
+                analytics: false,
+                developerMode: false,
+                debugLog: false,
+                hardwareAcceleration: true,
+                autoplayGifs: true
+            };
+            
+            await saveSettings();
+            updateUI();
+            showToast('Настройки сброшены', '✓');
+        }
+        
+        async function saveSettings() {
+            localStorage.setItem('craneapp_advanced_settings', JSON.stringify(settings));
+            
+            try {
+                await fetch('/api/v1/users/advanced-settings', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(settings)
+                });
+            } catch (e) {}
+        }
+        
+        function showPickerModal(title, content) {
+            const overlay = document.createElement('div');
+            overlay.className = 'picker-overlay';
+            overlay.id = 'pickerOverlay';
+            overlay.onclick = closePickerModal;
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;';
+            
+            const modal = document.createElement('div');
+            modal.id = 'pickerModal';
+            modal.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:var(--bg-secondary);border-radius:20px 20px 0 0;z-index:1001;max-height:60vh;overflow-y:auto;';
+            modal.innerHTML = `
+                <div style="padding:16px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:17px;font-weight:700;">${title}</span>
+                    <button style="background:none;border:none;color:var(--text-secondary);font-size:24px;cursor:pointer;" onclick="closePickerModal()">×</button>
+                </div>
+                <div>${content}</div>
+            `;
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(modal);
+        }
+        
+        function closePickerModal() {
+            const overlay = document.getElementById('pickerOverlay');
+            const modal = document.getElementById('pickerModal');
+            if (overlay) overlay.remove();
+            if (modal) modal.remove();
+        }
+        
+        function showToast(message, icon) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = '<span>' + icon + '</span><span>' + message + '</span>';
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+        
+        loadSettings();
+    </script>
+</body>
+</html>

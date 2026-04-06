@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Данные и память - CraneApp</title>
+    <script src="../../scripts/theme.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #121212;
+            --bg-tertiary: #1E1E1E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+            --text-muted: #666666;
+            --border-color: #1E1E1E;
+            --accent-color: #FF007F;
+            --accent-gradient: linear-gradient(135deg, #FF007F, #9D00FF);
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        
+        [data-theme="light"] {
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F5F5F5;
+            --bg-tertiary: #EEEEEE;
+            --text-primary: #000000;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --border-color: #DDDDDD;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; overflow-x: hidden; }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            padding-top: var(--safe-area-top);
+        }
+        
+        .header {
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 22px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .back-btn:active { background: rgba(255,255,255,0.1); }
+        .header-title { font-size: 17px; font-weight: 700; }
+        
+        .content { padding: 16px 0; }
+        
+        .section-header {
+            padding: 12px 16px 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        
+        .section {
+            background: var(--bg-secondary);
+            margin: 0 0 12px 0;
+        }
+        
+        @media (min-width: 768px) {
+            .section { border-radius: 12px; margin: 0 8px 12px 8px; }
+        }
+        
+        .item {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+        
+        .item:last-child { border-bottom: none; }
+        .item:active { background: var(--bg-tertiary); }
+        
+        .item-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+        
+        .item-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .item-text { flex: 1; }
+        .item-title { font-size: 15px; }
+        .item-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+        
+        .item-value { color: var(--text-secondary); font-size: 14px; margin-right: 8px; }
+        .item-arrow { color: var(--text-muted); font-size: 16px; }
+        
+        .toggle-switch {
+            width: 42px;
+            height: 26px;
+            border-radius: 13px;
+            background: #333333;
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .toggle-switch.active { background: var(--accent-gradient); }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+        
+        .toggle-switch.active::after { transform: translateX(16px); }
+        
+        .storage-card {
+            background: var(--bg-secondary);
+            margin: 0 8px 12px;
+            border-radius: 12px;
+            padding: 16px;
+        }
+        
+        .storage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .storage-title { font-size: 15px; font-weight: 600; }
+        .storage-total { font-size: 14px; color: var(--accent-color); }
+        
+        .storage-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        
+        .storage-fill {
+            height: 100%;
+            background: var(--accent-gradient);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        
+        .storage-items { display: flex; flex-direction: column; gap: 8px; }
+        
+        .storage-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+        
+        .storage-item-left { display: flex; align-items: center; gap: 10px; }
+        .storage-item-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .storage-item-label { font-size: 14px; }
+        .storage-item-size { font-size: 14px; color: var(--text-secondary); }
+        
+        .danger-btn {
+            width: calc(100% - 16px);
+            margin: 8px;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #FF4B4B;
+            background: transparent;
+            color: #FF4B4B;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .danger-btn:active { background: rgba(255,75,75,0.1); }
+        
+        .toast-container {
+            position: fixed;
+            bottom: calc(70px + var(--safe-area-bottom));
+            left: 12px;
+            right: 12px;
+            z-index: 10002;
+            pointer-events: none;
+        }
+        
+        .toast {
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid #00FF88;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            font-size: 13px;
+        }
+        
+        .toast.error { border-left-color: #FF4B4B; }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <div class="header">
+        <button class="back-btn" onclick="history.back()">←</button>
+        <span class="header-title">Данные и память</span>
+    </div>
+    
+    <div class="content">
+        <div class="storage-card">
+            <div class="storage-header">
+                <span class="storage-title">Использование памяти</span>
+                <span class="storage-total" id="storageTotal">—</span>
+            </div>
+            <div class="storage-bar">
+                <div class="storage-fill" id="storageFill" style="width: 0%;"></div>
+            </div>
+            <div class="storage-items" id="storageItems">
+                <div class="storage-item">
+                    <div class="storage-item-left">
+                        <div class="storage-item-dot" style="background: #FF007F;"></div>
+                        <span class="storage-item-label">Сообщения</span>
+                    </div>
+                    <span class="storage-item-size" id="messagesSize">—</span>
+                </div>
+                <div class="storage-item">
+                    <div class="storage-item-left">
+                        <div class="storage-item-dot" style="background: #9D00FF;"></div>
+                        <span class="storage-item-label">Фото и видео</span>
+                    </div>
+                        <span class="storage-item-size" id="mediaSize">—</span>
+                </div>
+                <div class="storage-item">
+                    <div class="storage-item-left">
+                        <div class="storage-item-dot" style="background: #0088FF;"></div>
+                        <span class="storage-item-label">Файлы</span>
+                    </div>
+                    <span class="storage-item-size" id="filesSize">—</span>
+                </div>
+                <div class="storage-item">
+                    <div class="storage-item-left">
+                        <div class="storage-item-dot" style="background: #00AA00;"></div>
+                        <span class="storage-item-label">Кэш</span>
+                    </div>
+                    <span class="storage-item-size" id="cacheSize">—</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section-header">Автозагрузка медиа</div>
+        <div class="section">
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(0,255,0,0.2);">📱</div>
+                    <div class="item-text">
+                        <div class="item-title">При использовании мобильных данных</div>
+                    </div>
+                </div>
+                <div class="toggle-switch active" id="toggleMobileData" onclick="toggleSetting(this, 'autoDownloadMobile')"></div>
+            </div>
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(42,171,238,0.2);">📶</div>
+                    <div class="item-text">
+                        <div class="item-title">При Wi-Fi</div>
+                    </div>
+                </div>
+                <div class="toggle-switch active" id="toggleWifi" onclick="toggleSetting(this, 'autoDownloadWifi')"></div>
+            </div>
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(157,0,255,0.2);">📡</div>
+                    <div class="item-text">
+                        <div class="item-title">При роуминге</div>
+                    </div>
+                </div>
+                <div class="toggle-switch" id="toggleRoaming" onclick="toggleSetting(this, 'autoDownloadRoaming')"></div>
+            </div>
+        </div>
+        
+        <div class="section-header">Автоудаление</div>
+        <div class="section">
+            <div class="item" onclick="showDeleteAfterPicker()">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(255,165,0,0.2);">⏱</div>
+                    <div class="item-text">
+                        <div class="item-title">Удалять медиафайлы через</div>
+                        <div class="item-subtitle">Освобождает место на устройстве</div>
+                    </div>
+                </div>
+                <span class="item-value" id="deleteAfterValue">Никогда</span>
+                <span class="item-arrow">›</span>
+            </div>
+        </div>
+        
+        <div class="section-header">Хранилище</div>
+        <div class="section">
+            <div class="item" onclick="clearCache()">
+                <div class="item-left">
+                    <div class="item-icon" style="background:rgba(255,75,75,0.2);">🗑</div>
+                    <div class="item-text">
+                        <div class="item-title">Очистить кэш</div>
+                        <div class="item-subtitle" id="cacheSubtitle">—</div>
+                    </div>
+                </div>
+                <span class="item-arrow">›</span>
+            </div>
+        </div>
+        
+        <button class="danger-btn" onclick="clearAllData()">Удалить все данные</button>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('craneapp_auth_token');
+        
+        let settings = {
+            autoDownloadMobile: true,
+            autoDownloadWifi: true,
+            autoDownloadRoaming: false,
+            deleteMediaAfter: 'never'
+        };
+        
+        let storageData = {
+            messages: 0,
+            media: 0,
+            files: 0,
+            cache: 0
+        };
+        
+        async function loadData() {
+            try {
+                const res = await fetch('/api/v1/users/storage', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    storageData = data.storage || storageData;
+                    settings = { ...settings, ...data.settings };
+                }
+            } catch (e) {
+                // Демо-данные
+                storageData = {
+                    messages: 450 * 1024 * 1024,
+                    media: 1.8 * 1024 * 1024 * 1024,
+                    files: 200 * 1024 * 1024,
+                    cache: 150 * 1024 * 1024
+                };
+            }
+            
+            updateUI();
+        }
+        
+        function updateUI() {
+            const total = storageData.messages + storageData.media + storageData.files + storageData.cache;
+            const totalMB = total / (1024 * 1024);
+            const totalGB = total / (1024 * 1024 * 1024);
+            
+            document.getElementById('storageTotal').textContent = totalGB >= 1 
+                ? totalGB.toFixed(1) + ' GB' 
+                : Math.round(totalMB) + ' MB';
+            
+            // Максимальный размер (условно 5GB)
+            const maxStorage = 5 * 1024 * 1024 * 1024;
+            const percentage = Math.min((total / maxStorage) * 100, 100);
+            document.getElementById('storageFill').style.width = percentage + '%';
+            
+            document.getElementById('messagesSize').textContent = formatSize(storageData.messages);
+            document.getElementById('mediaSize').textContent = formatSize(storageData.media);
+            document.getElementById('filesSize').textContent = formatSize(storageData.files);
+            document.getElementById('cacheSize').textContent = formatSize(storageData.cache);
+            document.getElementById('cacheSubtitle').textContent = formatSize(storageData.cache);
+            
+            updateToggle('toggleMobileData', settings.autoDownloadMobile);
+            updateToggle('toggleWifi', settings.autoDownloadWifi);
+            updateToggle('toggleRoaming', settings.autoDownloadRoaming);
+            
+            const deleteLabels = {
+                'never': 'Никогда',
+                '1week': '1 неделю',
+                '1month': '1 месяц',
+                '3months': '3 месяца'
+            };
+            document.getElementById('deleteAfterValue').textContent = deleteLabels[settings.deleteMediaAfter] || 'Никогда';
+        }
+        
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+        
+        function updateToggle(id, value) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (value) el.classList.add('active');
+            else el.classList.remove('active');
+        }
+        
+        async function toggleSetting(el, key) {
+            el.classList.toggle('active');
+            settings[key] = el.classList.contains('active');
+            await saveSettings();
+            showToast(settings[key] ? 'Включено' : 'Выключено', '✓');
+        }
+        
+        function showDeleteAfterPicker() {
+            const options = [
+                { value: 'never', label: 'Никогда' },
+                { value: '1week', label: '1 неделю' },
+                { value: '1month', label: '1 месяц' },
+                { value: '3months', label: '3 месяца' }
+            ];
+            
+            let html = options.map(o => `
+                <div class="item ${o.value === settings.deleteMediaAfter ? 'selected' : ''}" onclick="selectDeleteAfter('${o.value}')" style="${o.value === settings.deleteMediaAfter ? 'background:rgba(255,0,127,0.1);' : ''}">
+                    <span>${o.label}</span>
+                    ${o.value === settings.deleteMediaAfter ? '<span style="color:var(--accent-color);">✓</span>' : ''}
+                </div>
+            `).join('');
+            
+            showPickerModal('Удалять через', html);
+        }
+        
+        async function selectDeleteAfter(value) {
+            settings.deleteMediaAfter = value;
+            await saveSettings();
+            updateUI();
+            closePickerModal();
+            showToast('Сохранено', '✓');
+        }
+        
+        async function clearCache() {
+            if (!confirm('Очистить кэш? Это не удалит ваши сообщения и медиафайлы.')) return;
+            
+            try {
+                const res = await fetch('/api/v1/users/storage/cache', {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (res.ok) {
+                    storageData.cache = 0;
+                    updateUI();
+                    showToast('Кэш очищен', '✓');
+                }
+            } catch (e) {
+                // Демо
+                storageData.cache = 0;
+                updateUI();
+                showToast('Кэш очищен', '✓');
+            }
+        }
+        
+        async function clearAllData() {
+            if (!confirm('Удалить все данные приложения? Это действие нельзя отменить.')) return;
+            if (!confirm('Вы уверены? Все сообщения, медиафайлы и настройки будут удалены.')) return;
+            
+            try {
+                const res = await fetch('/api/v1/users/storage/all', {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (res.ok) {
+                    localStorage.clear();
+                    showToast('Данные удалены', '✓');
+                    setTimeout(() => {
+                        window.location.href = '../auth/login.html';
+                    }, 1000);
+                }
+            } catch (e) {
+                showToast('Ошибка', '❌', true);
+            }
+        }
+        
+        async function saveSettings() {
+            localStorage.setItem('craneapp_data_settings', JSON.stringify(settings));
+            
+            try {
+                await fetch('/api/v1/users/storage/settings', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(settings)
+                });
+            } catch (e) {}
+        }
+        
+        function showPickerModal(title, content) {
+            const overlay = document.createElement('div');
+            overlay.className = 'picker-overlay';
+            overlay.id = 'pickerOverlay';
+            overlay.onclick = closePickerModal;
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;';
+            
+            const modal = document.createElement('div');
+            modal.id = 'pickerModal';
+            modal.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:var(--bg-secondary);border-radius:20px 20px 0 0;z-index:1001;max-height:60vh;overflow-y:auto;';
+            modal.innerHTML = `
+                <div style="padding:16px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:17px;font-weight:700;">${title}</span>
+                    <button style="background:none;border:none;color:var(--text-secondary);font-size:24px;cursor:pointer;" onclick="closePickerModal()">×</button>
+                </div>
+                <div>${content}</div>
+            `;
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(modal);
+        }
+        
+        function closePickerModal() {
+            const overlay = document.getElementById('pickerOverlay');
+            const modal = document.getElementById('pickerModal');
+            if (overlay) overlay.remove();
+            if (modal) modal.remove();
+        }
+        
+        function showToast(message, icon, isError) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast' + (isError ? ' error' : '');
+            toast.innerHTML = '<span>' + icon + '</span><span>' + message + '</span>';
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+        
+        loadData();
+    </script>
+</body>
+</html>
