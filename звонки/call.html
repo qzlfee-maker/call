@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>TelegramCall – Активный звонок</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .call-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .call-header {
+            background: #1a1a2e;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2ea6ff;
+            flex-shrink: 0;
+        }
+        .call-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .call-name {
+            font-weight: 600;
+            font-size: 18px;
+        }
+        .call-status {
+            font-size: 12px;
+            color: #8b949e;
+        }
+        .call-timer {
+            font-size: 20px;
+            font-weight: 600;
+            font-family: monospace;
+        }
+        .video-container {
+            flex: 1;
+            position: relative;
+            background: #000;
+        }
+        .remote-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .local-video {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            width: 150px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid #2ea6ff;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            padding: 16px;
+            background: #1a1a2e;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+        .control-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            background: #2ea6ff;
+            color: white;
+            transition: transform 0.1s;
+        }
+        .control-btn:active { transform: scale(0.94); }
+        .control-btn.end-call { background: #dc2626; }
+        .control-btn.inactive { opacity: 0.5; background: #4a4a6a; }
+        .extra-controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background: #1a1a2e;
+            border-top: 1px solid #2ea6ff;
+            flex-shrink: 0;
+        }
+        .extra-btn {
+            background: #2a2a3a;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .chat-panel {
+            position: fixed;
+            bottom: 80px;
+            right: 16px;
+            width: 280px;
+            background: #1a1a2e;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            display: none;
+            flex-direction: column;
+            max-height: 300px;
+            z-index: 20;
+        }
+        .chat-panel.open { display: flex; }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            font-size: 12px;
+        }
+        .chat-input {
+            display: flex;
+            padding: 8px;
+            border-top: 1px solid #2ea6ff;
+        }
+        .chat-input input {
+            flex: 1;
+            background: #0f0f1a;
+            border: none;
+            padding: 8px;
+            border-radius: 20px;
+            color: white;
+        }
+        .chat-input button {
+            background: #2ea6ff;
+            border: none;
+            width: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: white;
+        }
+        .notification {
+            position: fixed;
+            top: 70px;
+            left: 20px;
+            right: 20px;
+            background: #1a1a2e;
+            border-left: 4px solid #2ea6ff;
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+            font-size: 14px;
+            z-index: 1000;
+            animation: slideDown 0.3s;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @media (max-width: 768px) {
+            .local-video { width: 100px; height: 70px; bottom: 10px; right: 10px; }
+            .control-btn { width: 48px; height: 48px; font-size: 20px; }
+            .extra-btn { padding: 6px 12px; font-size: 12px; }
+            .chat-panel { width: 260px; right: 8px; bottom: 70px; }
+        }
+        @media (max-width: 480px) {
+            .local-video { width: 80px; height: 56px; }
+            .control-btn { width: 44px; height: 44px; font-size: 18px; }
+        }
+        .hidden { display: none; }
+        .debug-info {
+            position: fixed;
+            bottom: 4px;
+            left: 4px;
+            font-size: 9px;
+            color: #666;
+            background: rgba(0,0,0,0.5);
+            padding: 2px 6px;
+            border-radius: 4px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+<div class="call-container">
+    <div class="call-header">
+        <div class="call-info">
+            <div class="call-name" id="callName">Соединение...</div>
+            <div class="call-status" id="callStatus">Устанавливается</div>
+        </div>
+        <div class="call-timer" id="callTimer">00:00</div>
+    </div>
+    <div class="video-container" id="videoContainer">
+        <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
+        <video id="localVideo" class="local-video" autoplay playsinline muted></video>
+    </div>
+    <div class="controls" id="mainControls">
+        <button class="control-btn" id="toggleMuteBtn">🎤</button>
+        <button class="control-btn" id="toggleVideoBtn">📹</button>
+        <button class="control-btn" id="switchCameraBtn">🔄</button>
+        <button class="control-btn end-call" id="endCallBtn">📞</button>
+    </div>
+    <div class="extra-controls" id="extraControls">
+        <button class="extra-btn" id="screenShareBtn">🖥️ Демо экрана</button>
+        <button class="extra-btn" id="raiseHandBtn">✋ Поднять руку</button>
+        <button class="extra-btn" id="recordBtn">🔴 Запись</button>
+        <button class="extra-btn" id="chatBtn">💬 Чат</button>
+    </div>
+</div>
+<div id="chatPanel" class="chat-panel">
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input"><input type="text" id="chatInput" placeholder="Сообщение"><button id="sendChatBtn">➤</button></div>
+</div>
+<div id="debugInfo" class="debug-info"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    // ========== Глобальные переменные ==========
+    let socket = null;
+    let currentUser = null;
+    let callData = null;
+    let peerConnection = null;
+    let localStream = null;
+    let screenShareStream = null;
+    let isScreenSharing = false;
+    let callTimerInterval = null;
+    let callStartTime = 0;
+    let groupPeerConnections = new Map(); // userId -> RTCPeerConnection
+    let isInGroup = false;
+    let groupId = null;
+    let isHost = false;
+    let waitingParticipants = [];
+
+    // DOM
+    const callNameEl = document.getElementById('callName');
+    const callStatusEl = document.getElementById('callStatus');
+    const callTimerEl = document.getElementById('callTimer');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const localVideo = document.getElementById('localVideo');
+    const toggleMuteBtn = document.getElementById('toggleMuteBtn');
+    const toggleVideoBtn = document.getElementById('toggleVideoBtn');
+    const switchCameraBtn = document.getElementById('switchCameraBtn');
+    const endCallBtn = document.getElementById('endCallBtn');
+    const screenShareBtn = document.getElementById('screenShareBtn');
+    const raiseHandBtn = document.getElementById('raiseHandBtn');
+    const recordBtn = document.getElementById('recordBtn');
+    const chatBtn = document.getElementById('chatBtn');
+    const chatPanel = document.getElementById('chatPanel');
+    const chatMessagesDiv = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendChatBtn = document.getElementById('sendChatBtn');
+    const debugInfo = document.getElementById('debugInfo');
+
+    function debugLog(msg) {
+        console.log(msg);
+        debugInfo.textContent = msg;
+        setTimeout(() => { if (debugInfo.textContent === msg) debugInfo.textContent = ''; }, 3000);
+    }
+
+    function showNotification(msg, isError = false) {
+        const n = document.createElement('div');
+        n.className = 'notification';
+        n.style.borderLeftColor = isError ? '#dc2626' : '#2ea6ff';
+        n.textContent = msg;
+        document.body.appendChild(n);
+        setTimeout(() => n.remove(), 3000);
+    }
+
+    // Загрузка данных звонка из localStorage
+    function loadCallData() {
+        const data = localStorage.getItem('callData');
+        if (!data) {
+            alert('Ошибка: нет данных о звонке');
+            window.close();
+            return;
+        }
+        callData = JSON.parse(data);
+        localStorage.removeItem('callData');
+        currentUser = { userId: callData.myUserId, username: callData.myUsername };
+        if (callData.type === 'personal') {
+            callNameEl.textContent = callData.targetName;
+            callStatusEl.textContent = 'Соединение...';
+            // скрываем кнопки, недоступные в личных звонках
+            raiseHandBtn.style.display = 'none';
+            chatBtn.style.display = 'none';
+        } else {
+            callNameEl.textContent = `Группа: ${callData.groupName}`;
+            callStatusEl.textContent = 'Подключение...';
+            isInGroup = true;
+            groupId = callData.groupId;
+        }
+        socket = io({ transports: ['websocket', 'polling'] });
+        socket.on('connect', () => {
+            debugLog('WebSocket connected on call page');
+            socket.emit('register', { username: currentUser.username, userId: currentUser.userId });
+        });
+        setupSocketListeners();
+    }
+
+    function setupSocketListeners() {
+        if (callData.type === 'personal') {
+            // Личный звонок
+            if (callData.isIncoming) {
+                // Мы отвечаем
+                socket.on('call-accepted', async () => { /* не нужно */ });
+                socket.emit('accept-call', { fromId: callData.targetId });
+                startPersonalCall(true);
+            } else {
+                // Мы звоним
+                startPersonalCall(false);
+            }
+            socket.on('call-rejected', () => { showNotification('Звонок отклонён'); window.close(); });
+            socket.on('call-ended', () => { showNotification('Звонок завершён'); window.close(); });
+            socket.on('offer', async (data) => await handleOffer(data));
+            socket.on('answer', async (data) => await handleAnswer(data));
+            socket.on('ice-candidate', async (data) => {
+                if (peerConnection) {
+                    try { await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate)); }
+                    catch(e) { console.error('ICE error', e); }
+                }
+            });
+        } else {
+            // Групповой звонок
+            socket.on('admitted-to-group', async (data) => {
+                showNotification('Вас пустили в группу');
+                await joinGroupCall();
+            });
+            socket.on('rejected-from-group', () => { showNotification('Вас не пустили в группу', true); window.close(); });
+            socket.on('group-participants-update', (data) => updateParticipants(data.participants));
+            socket.on('group-offer', async (data) => await handleGroupOffer(data));
+            socket.on('group-answer', async (data) => await handleGroupAnswer(data));
+            socket.on('group-ice', async (data) => await handleGroupIce(data));
+            socket.on('hand-raised', (data) => { showNotification(`${data.username} поднял(а) руку`); });
+            socket.on('group-chat-message', (data) => addChatMessage(data));
+            socket.on('screen-share-offer', async (data) => await handleScreenShareOffer(data));
+            socket.on('screen-share-answer', async (data) => await handleScreenShareAnswer(data));
+            socket.on('call-ended', () => { showNotification('Звонок завершён'); window.close(); });
+            socket.on('waiting-list-update', (data) => updateWaitingPanel(data.waiting));
+            // Отправляем запрос на присоединение
+            socket.emit('join-group-request', { groupId });
+        }
+    }
+
+    // ========== ЛИЧНЫЙ ЗВОНОК ==========
+    async function startPersonalCall(isAnswering) {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({
+                video: callData.callType === 'video',
+                audio: true
+            });
+            localVideo.srcObject = localStream;
+            const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+            peerConnection = new RTCPeerConnection(config);
+            localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+            peerConnection.onicecandidate = e => {
+                if (e.candidate) socket.emit('ice-candidate', { targetId: callData.targetId, candidate: e.candidate });
+            };
+            peerConnection.ontrack = e => { if (e.streams[0]) remoteVideo.srcObject = e.streams[0]; };
+            if (isAnswering) {
+                // Ждём offer от звонящего
+            } else {
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                socket.emit('offer', { targetId: callData.targetId, offer });
+            }
+            startTimer();
+            callStatusEl.textContent = 'В процессе';
+        } catch (err) {
+            showNotification('Не удалось получить доступ к камере/микрофону', true);
+            window.close();
+        }
+    }
+
+    async function handleOffer(data) {
+        if (!peerConnection) {
+            const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+            peerConnection = new RTCPeerConnection(config);
+            if (localStream) localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+            peerConnection.onicecandidate = e => {
+                if (e.candidate) socket.emit('ice-candidate', { targetId: data.from, candidate: e.candidate });
+            };
+            peerConnection.ontrack = e => { if (e.streams[0]) remoteVideo.srcObject = e.streams[0]; };
+        }
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        socket.emit('answer', { targetId: data.from, answer });
+        startTimer();
+    }
+    async function handleAnswer(data) {
+        if (peerConnection) await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+    }
+
+    // ========== ГРУППОВОЙ ЗВОНОК (mesh) ==========
+    async function joinGroupCall() {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localVideo.srcObject = localStream;
+            // Сигнал для сервера, что мы вошли
+            // Ждём offers от других участников
+            startTimer();
+            callStatusEl.textContent = 'В конференции';
+            // Показываем кнопки групповых функций
+            raiseHandBtn.style.display = 'block';
+            chatBtn.style.display = 'block';
+        } catch (err) {
+            showNotification('Ошибка доступа к медиа', true);
+            window.close();
+        }
+    }
+
+    async function handleGroupOffer(data) {
+        let pc = groupPeerConnections.get(data.from);
+        if (!pc) {
+            const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+            pc = new RTCPeerConnection(config);
+            if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+            pc.onicecandidate = e => {
+                if (e.candidate) socket.emit('group-ice', { groupId, targetId: data.from, candidate: e.candidate });
+            };
+            pc.ontrack = e => {
+                // В групповом звонке нужно отображать видео каждого участника.
+                // Для упрощения показываем только первого (удалённое видео).
+                if (!remoteVideo.srcObject) remoteVideo.srcObject = e.streams[0];
+                else {
+                    // Для остальных участников можно добавить дополнительные видеоэлементы,
+                    // но для краткости опустим.
+                }
+            };
+            groupPeerConnections.set(data.from, pc);
+        }
+        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('group-answer', { groupId, targetId: data.from, answer });
+    }
+
+    async function handleGroupAnswer(data) {
+        let pc = groupPeerConnections.get(data.from);
+        if (pc) await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+    }
+
+    async function handleGroupIce(data) {
+        let pc = groupPeerConnections.get(data.from);
+        if (pc) await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+    }
+
+    function updateParticipants(participants) {
+        // можно отобразить список участников, но для экономии места оставляем как заглушку
+        console.log('Participants:', participants);
+    }
+
+    function updateWaitingPanel(waiting) {
+        waitingParticipants = waiting;
+        if (isHost && waiting.length) {
+            showNotification(`В зале ожидания: ${waiting.length} чел.`);
+            // здесь можно реализовать модальное окно, но для простоты просто уведомление
+        }
+    }
+
+    // ========== ОБЩИЕ УПРАВЛЕНИЯ ==========
+    let muted = false, videoOff = false, usingFront = true;
+    toggleMuteBtn.onclick = () => {
+        if (localStream) {
+            muted = !muted;
+            localStream.getAudioTracks().forEach(t => t.enabled = !muted);
+            toggleMuteBtn.style.opacity = muted ? '0.5' : '1';
+        }
+    };
+    toggleVideoBtn.onclick = () => {
+        if (localStream) {
+            videoOff = !videoOff;
+            localStream.getVideoTracks().forEach(t => t.enabled = !videoOff);
+            toggleVideoBtn.style.opacity = videoOff ? '0.5' : '1';
+        }
+    };
+    switchCameraBtn.onclick = async () => {
+        if (!localStream) return;
+        const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: usingFront ? 'environment' : 'user' }, audio: true });
+        const newVideoTrack = newStream.getVideoTracks()[0];
+        const oldVideoTrack = localStream.getVideoTracks()[0];
+        localStream.removeTrack(oldVideoTrack);
+        localStream.addTrack(newVideoTrack);
+        oldVideoTrack.stop();
+        if (callData.type === 'personal' && peerConnection) {
+            const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+            if (sender) sender.replaceTrack(newVideoTrack);
+        } else if (callData.type === 'group') {
+            for (let pc of groupPeerConnections.values()) {
+                const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+                if (sender) sender.replaceTrack(newVideoTrack);
+            }
+        }
+        localVideo.srcObject = localStream;
+        usingFront = !usingFront;
+    };
+    endCallBtn.onclick = () => {
+        if (callData.type === 'personal') {
+            socket.emit('end-call', { targetId: callData.targetId });
+        } else {
+            socket.emit('leave-group', { groupId });
+        }
+        window.close();
+    };
+
+    // Демонстрация экрана
+    screenShareBtn.onclick = async () => {
+        if (isScreenSharing) {
+            stopScreenShare();
+            return;
+        }
+        try {
+            screenShareStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+            const videoTrack = screenShareStream.getVideoTracks()[0];
+            const oldVideoTrack = localStream.getVideoTracks()[0];
+            localStream.removeTrack(oldVideoTrack);
+            localStream.addTrack(videoTrack);
+            localVideo.srcObject = localStream;
+            if (callData.type === 'personal' && peerConnection) {
+                const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+                if (sender) sender.replaceTrack(videoTrack);
+            } else if (callData.type === 'group') {
+                for (let pc of groupPeerConnections.values()) {
+                    const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+                    if (sender) sender.replaceTrack(videoTrack);
+                }
+            }
+            isScreenSharing = true;
+            screenShareBtn.textContent = '🖥️ Остановить';
+            videoTrack.onended = () => stopScreenShare();
+        } catch (err) {
+            showNotification('Демонстрация экрана отменена');
+        }
+    };
+    function stopScreenShare() {
+        if (screenShareStream) {
+            screenShareStream.getTracks().forEach(t => t.stop());
+            screenShareStream = null;
+        }
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+            const newVideoTrack = stream.getVideoTracks()[0];
+            const oldVideoTrack = localStream.getVideoTracks()[0];
+            localStream.removeTrack(oldVideoTrack);
+            localStream.addTrack(newVideoTrack);
+            localVideo.srcObject = localStream;
+            if (callData.type === 'personal' && peerConnection) {
+                const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+                if (sender) sender.replaceTrack(newVideoTrack);
+            } else if (callData.type === 'group') {
+                for (let pc of groupPeerConnections.values()) {
+                    const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+                    if (sender) sender.replaceTrack(newVideoTrack);
+                }
+            }
+        });
+        isScreenSharing = false;
+        screenShareBtn.textContent = '🖥️ Демо экрана';
+    }
+
+    // Поднятие руки (только для групп)
+    raiseHandBtn.onclick = () => {
+        if (callData.type === 'group') {
+            socket.emit('raise-hand', { groupId });
+            showNotification('Вы подняли руку');
+        }
+    };
+
+    // Запись (симуляция)
+    let isRecording = false;
+    recordBtn.onclick = () => {
+        if (!isRecording) {
+            isRecording = true;
+            recordBtn.textContent = '⏹️ Остановить';
+            showNotification('Запись начата (симуляция)');
+        } else {
+            isRecording = false;
+            recordBtn.textContent = '🔴 Запись';
+            showNotification('Запись остановлена (симуляция)');
+        }
+    };
+
+    // Чат
+    chatBtn.onclick = () => chatPanel.classList.toggle('open');
+    sendChatBtn.onclick = () => {
+        const msg = chatInput.value.trim();
+        if (msg && callData.type === 'group') {
+            socket.emit('group-chat-message', { groupId, message: msg });
+            addChatMessage({ username: currentUser.username, message: msg });
+            chatInput.value = '';
+        } else if (msg && callData.type === 'personal') {
+            showNotification('Чат доступен только в групповых звонках');
+        }
+    };
+    function addChatMessage(data) {
+        const div = document.createElement('div');
+        div.innerHTML = `<b>${escapeHtml(data.username)}:</b> ${escapeHtml(data.message)}`;
+        chatMessagesDiv.appendChild(div);
+        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+    }
+    function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+
+    // Таймер
+    function startTimer() {
+        if (callTimerInterval) clearInterval(callTimerInterval);
+        callStartTime = Date.now();
+        callTimerInterval = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+            const mins = Math.floor(elapsed / 60);
+            const secs = elapsed % 60;
+            callTimerEl.textContent = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+        }, 1000);
+    }
+
+    // Инициализация
+    loadCallData();
+</script>
+</body>
+</html>
