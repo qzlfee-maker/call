@@ -1,1 +1,728 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>CraneCall — Видеозвонки</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #080c14;
+  --surface:   #0f1624;
+  --surface2:  #162035;
+  --border:    rgba(62,130,255,0.2);
+  --border-b:  rgba(62,130,255,0.5);
+  --accent:    #3e82ff;
+  --accent2:   #00c4ff;
+  --danger:    #ff4757;
+  --success:   #2ed573;
+  --text:      #e8eaf6;
+  --muted:     #5a6a8a;
+  --card-bg:   rgba(15,22,36,0.95);
+  --glow:      rgba(62,130,255,0.15);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overflow:hidden; }
+body {
+  font-family:'Manrope', system-ui, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  background-image:
+    radial-gradient(ellipse 60% 50% at 50% -10%, rgba(62,130,255,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 80% 80%, rgba(0,196,255,0.06) 0%, transparent 60%);
+}
 
+/* ── SCROLLBAR ─────────────────────────────────────────── */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border-b); border-radius:4px; }
+
+/* ── AUTH ──────────────────────────────────────────────── */
+.auth-overlay {
+  position:fixed; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  z-index:200;
+  background:var(--bg);
+  background-image:radial-gradient(ellipse 70% 60% at 50% 0%, rgba(62,130,255,0.18) 0%, transparent 70%);
+}
+.auth-card {
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:44px 40px;
+  width:min(420px, 92vw);
+  text-align:center;
+  backdrop-filter:blur(20px);
+  box-shadow:0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(62,130,255,0.08) inset;
+  animation:fadeUp 0.4s ease;
+}
+@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+.auth-logo {
+  width:64px; height:64px; border-radius:20px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 20px;
+  box-shadow:0 8px 32px rgba(62,130,255,0.35);
+  font-size:28px;
+}
+.auth-card h1 {
+  font-size:26px; font-weight:800; letter-spacing:-0.5px; margin-bottom:6px;
+  background:linear-gradient(135deg,#fff 30%,var(--accent2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.auth-card p { color:var(--muted); font-size:14px; margin-bottom:28px; }
+
+.field-group { margin-bottom:12px; }
+.field-group label { display:block; text-align:left; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:6px; letter-spacing:0.5px; text-transform:uppercase; }
+.auth-input {
+  width:100%; padding:13px 16px;
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:12px; color:var(--text); font-size:15px; font-family:inherit;
+  transition:border-color 0.2s, box-shadow 0.2s;
+  outline:none;
+}
+.auth-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(62,130,255,0.12); }
+.auth-input::placeholder { color:var(--muted); }
+
+.auth-btn {
+  width:100%; padding:14px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none; border-radius:12px; color:#fff;
+  font-size:15px; font-weight:700; font-family:inherit;
+  cursor:pointer; margin-top:20px;
+  transition:transform 0.15s, box-shadow 0.15s;
+  box-shadow:0 4px 20px rgba(62,130,255,0.3);
+}
+.auth-btn:hover { transform:translateY(-1px); box-shadow:0 8px 28px rgba(62,130,255,0.4); }
+.auth-btn:active { transform:translateY(0); }
+
+.auth-hint {
+  margin-top:16px; font-size:12px; color:var(--muted); line-height:1.5;
+}
+.auth-hint strong { color:var(--accent2); }
+
+.test-badge {
+  display:inline-flex; align-items:center; gap:6px;
+  background:rgba(62,130,255,0.1); border:1px solid rgba(62,130,255,0.25);
+  border-radius:20px; padding:6px 14px; font-size:12px; font-weight:600;
+  color:var(--accent2); cursor:pointer; margin-top:14px;
+  transition:background 0.2s;
+}
+.test-badge:hover { background:rgba(62,130,255,0.18); }
+
+/* ── APP LAYOUT ────────────────────────────────────────── */
+.app { display:flex; flex-direction:column; height:100vh; }
+
+.header {
+  height:60px; flex-shrink:0;
+  background:var(--surface); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 20px;
+  backdrop-filter:blur(12px);
+}
+.header-logo { display:flex; align-items:center; gap:10px; font-size:17px; font-weight:800; letter-spacing:-0.3px; }
+.header-logo-icon {
+  width:34px; height:34px; border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center; font-size:16px;
+  box-shadow:0 4px 12px rgba(62,130,255,0.3);
+}
+.header-user { display:flex; align-items:center; gap:10px; }
+.header-username { font-size:14px; font-weight:600; color:var(--muted); }
+.avatar-btn {
+  width:36px; height:36px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; font-weight:700; cursor:pointer; border:none; color:#fff;
+  box-shadow:0 2px 8px rgba(62,130,255,0.25);
+}
+
+.main { display:flex; flex:1; overflow:hidden; }
+
+/* ── SIDEBAR ───────────────────────────────────────────── */
+.sidebar {
+  width:300px; flex-shrink:0;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+}
+@media(max-width:768px) {
+  .sidebar { width:100%; position:fixed; z-index:50; top:60px; left:0; bottom:0; transform:translateX(-100%); transition:transform 0.3s cubic-bezier(.4,0,.2,1); }
+  .sidebar.open { transform:translateX(0); }
+}
+
+.sidebar-tabs {
+  display:flex; border-bottom:1px solid var(--border);
+}
+.tab-btn {
+  flex:1; padding:12px 8px; background:none; border:none; color:var(--muted);
+  font-size:12px; font-weight:600; font-family:inherit;
+  cursor:pointer; transition:color 0.2s; letter-spacing:0.3px;
+  text-transform:uppercase; border-bottom:2px solid transparent;
+}
+.tab-btn.active { color:var(--accent2); border-bottom-color:var(--accent2); }
+
+.sidebar-body { flex:1; overflow-y:auto; }
+
+/* ── USER CARD ─────────────────────────────────────────── */
+.user-card {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 16px; cursor:pointer;
+  transition:background 0.15s; border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.user-card:hover { background:var(--surface2); }
+.user-card:active { background:rgba(62,130,255,0.08); }
+
+.uc-avatar {
+  width:46px; height:46px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:19px; font-weight:700; color:#fff; position:relative;
+}
+.status-dot {
+  position:absolute; bottom:1px; right:1px;
+  width:11px; height:11px; border-radius:50%;
+  border:2px solid var(--surface); background:var(--success);
+}
+.status-dot.busy { background:var(--danger); }
+
+.uc-info { flex:1; min-width:0; }
+.uc-name { font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.uc-status { font-size:12px; color:var(--muted); margin-top:2px; }
+
+.uc-actions { display:flex; gap:6px; }
+.uc-btn {
+  width:34px; height:34px; border-radius:50%; border:none;
+  background:var(--surface2); color:var(--accent);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:background 0.2s, transform 0.1s;
+}
+.uc-btn:hover { background:rgba(62,130,255,0.2); }
+.uc-btn:active { transform:scale(0.92); }
+.uc-btn.video { color:var(--accent2); }
+.uc-btn svg { width:16px; height:16px; }
+
+.empty-state {
+  padding:40px 20px; text-align:center; color:var(--muted);
+  font-size:14px; line-height:1.6;
+}
+.empty-state .icon { font-size:40px; display:block; margin-bottom:12px; }
+
+/* ── GROUP SECTION ─────────────────────────────────────── */
+.group-create-btn {
+  margin:14px 16px 4px;
+  display:flex; align-items:center; gap:10px;
+  padding:12px 16px; background:rgba(62,130,255,0.1);
+  border:1px dashed rgba(62,130,255,0.3); border-radius:14px;
+  cursor:pointer; color:var(--accent2); font-size:13px; font-weight:600;
+  font-family:inherit; transition:background 0.2s;
+}
+.group-create-btn:hover { background:rgba(62,130,255,0.16); }
+.group-create-btn svg { width:18px; height:18px; }
+
+/* ── MAIN AREA ─────────────────────────────────────────── */
+.call-area { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+.call-placeholder {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:16px;
+  color:var(--muted); text-align:center; padding:20px;
+}
+.call-placeholder .big-icon { font-size:64px; filter:grayscale(0.3); }
+.call-placeholder h2 { font-size:22px; font-weight:700; color:var(--text); }
+.call-placeholder p { font-size:14px; max-width:300px; line-height:1.6; }
+
+/* ── INCOMING CALL POPUP ───────────────────────────────── */
+.incoming-popup {
+  position:fixed; bottom:24px; right:24px; z-index:300;
+  background:var(--surface2);
+  border:1px solid var(--border-b);
+  border-radius:20px; padding:20px;
+  width:min(340px, 90vw);
+  box-shadow:0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(62,130,255,0.1) inset;
+  animation:slideInRight 0.35s cubic-bezier(.4,0,.2,1);
+}
+@keyframes slideInRight { from { transform:translateX(110%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+.incoming-popup.hiding { animation:slideOutRight 0.3s forwards; }
+@keyframes slideOutRight { to { transform:translateX(110%); opacity:0; } }
+
+.ip-header { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+.ip-avatar {
+  width:52px; height:52px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; font-weight:700; flex-shrink:0;
+  animation:ring 1.2s ease-in-out infinite;
+  box-shadow:0 0 0 0 rgba(62,130,255,0.4);
+}
+@keyframes ring {
+  0%   { box-shadow:0 0 0 0 rgba(62,130,255,0.4); }
+  70%  { box-shadow:0 0 0 14px rgba(62,130,255,0); }
+  100% { box-shadow:0 0 0 0 rgba(62,130,255,0); }
+}
+.ip-info h3 { font-size:16px; font-weight:700; }
+.ip-info p  { font-size:13px; color:var(--muted); margin-top:3px; }
+
+.ip-actions { display:flex; gap:10px; }
+.ip-btn {
+  flex:1; padding:12px; border:none; border-radius:12px;
+  font-size:13px; font-weight:700; font-family:inherit;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+  transition:transform 0.1s, filter 0.2s;
+}
+.ip-btn:active { transform:scale(0.96); }
+.ip-btn.accept { background:linear-gradient(135deg,var(--success),#00b894); color:#fff; }
+.ip-btn.reject { background:linear-gradient(135deg,var(--danger),#c0392b); color:#fff; }
+.ip-btn svg { width:16px; height:16px; }
+
+/* ── MODAL (Create group) ───────────────────────────────── */
+.modal-overlay {
+  position:fixed; inset:0; z-index:400;
+  background:rgba(8,12,20,0.8); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center;
+}
+.modal {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:20px; padding:28px; width:min(380px,90vw);
+  animation:fadeUp 0.3s ease;
+}
+.modal h2 { font-size:18px; font-weight:800; margin-bottom:20px; }
+.modal-input {
+  width:100%; padding:12px 14px; background:var(--surface);
+  border:1px solid var(--border); border-radius:10px;
+  color:var(--text); font-size:14px; font-family:inherit;
+  margin-bottom:16px; outline:none;
+  transition:border-color 0.2s;
+}
+.modal-input:focus { border-color:var(--accent); }
+.modal-actions { display:flex; gap:10px; margin-top:4px; }
+.modal-btn {
+  flex:1; padding:12px; border:none; border-radius:10px;
+  font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;
+  transition:filter 0.2s;
+}
+.modal-btn.primary { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; }
+.modal-btn.secondary { background:var(--surface); color:var(--muted); }
+
+/* ── NOTIFICATION ───────────────────────────────────────── */
+.toast {
+  position:fixed; top:72px; left:50%; transform:translateX(-50%);
+  background:var(--surface2); border:1px solid var(--border-b);
+  border-radius:12px; padding:10px 18px;
+  font-size:13px; font-weight:600; z-index:500;
+  animation:toastIn 0.3s ease; white-space:nowrap;
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);
+}
+.toast.error { border-color:rgba(255,71,87,0.5); color:var(--danger); }
+.toast.success { border-color:rgba(46,213,115,0.5); color:var(--success); }
+@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(-8px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+
+.hidden { display:none !important; }
+
+/* ── MOBILE BURGER ─────────────────────────────────────── */
+.burger-btn {
+  display:none; width:36px; height:36px; border-radius:8px;
+  background:none; border:none; color:var(--text); cursor:pointer;
+  align-items:center; justify-content:center;
+}
+@media(max-width:768px) {
+  .burger-btn { display:flex; }
+  .call-area .call-placeholder h2 { font-size:18px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── AUTH ─────────────────────────────────────────────── -->
+<div id="authOverlay" class="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">📞</div>
+    <h1>CraneCall</h1>
+    <p>Бесплатные P2P видеозвонки</p>
+
+    <div class="field-group">
+      <label>Ваше имя</label>
+      <input type="text" id="regUsername" class="auth-input" placeholder="Например: Мама" autocomplete="off">
+    </div>
+    <div class="field-group">
+      <label>Ваш ID</label>
+      <input type="text" id="regUserId" class="auth-input" placeholder="Например: mama" autocomplete="off">
+    </div>
+    <button class="auth-btn" id="registerBtn">Войти →</button>
+
+    <div class="auth-hint">
+      Скажите свой ID другим пользователям, чтобы они могли вас найти.<br>
+      ID нечувствителен к регистру.
+    </div>
+
+    <div class="test-badge" onclick="quickLogin('Тест1','test1')">⚡ Быстрый тест: Test1</div>
+    <div class="test-badge" onclick="quickLogin('Тест2','test2')" style="margin-left:8px;">⚡ Быстрый тест: Test2</div>
+  </div>
+</div>
+
+<!-- ── APP ──────────────────────────────────────────────── -->
+<div id="app" class="app hidden">
+  <header class="header">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="burger-btn" id="burgerBtn" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <div class="header-logo">
+        <div class="header-logo-icon">📞</div>
+        <span>CraneCall</span>
+      </div>
+    </div>
+    <div class="header-user">
+      <span class="header-username" id="headerUsername"></span>
+      <button class="avatar-btn" id="headerAvatar"></button>
+    </div>
+  </header>
+
+  <div class="main">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-tabs">
+        <button class="tab-btn active" id="tabUsers" onclick="switchTab('users')">Контакты</button>
+        <button class="tab-btn" id="tabGroups" onclick="switchTab('groups')">Группы</button>
+      </div>
+      <div class="sidebar-body" id="sidebarBody">
+        <div id="usersPanel">
+          <div class="empty-state" id="emptyUsers">
+            <span class="icon">👥</span>
+            Нет пользователей онлайн.<br>Попросите друга войти!
+          </div>
+          <div id="usersList"></div>
+        </div>
+        <div id="groupsPanel" class="hidden">
+          <button class="group-create-btn" onclick="openGroupModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            Создать групповой звонок
+          </button>
+          <div class="empty-state" id="emptyGroups">
+            <span class="icon">🎙️</span>
+            Создайте группу или войдите в существующую
+          </div>
+          <div id="groupsList"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CALL AREA -->
+    <main class="call-area" id="callArea">
+      <div class="call-placeholder">
+        <div class="big-icon">📞</div>
+        <h2>Готов к звонкам</h2>
+        <p>Выберите контакт слева и нажмите кнопку звонка. Звонки работают прямо в браузере — никаких установок!</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ── CREATE GROUP MODAL ───────────────────────────────── -->
+<div id="groupModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2>🎙️ Новый групповой звонок</h2>
+    <input type="text" id="groupNameInput" class="modal-input" placeholder="Название группы (например: Семья)">
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeGroupModal()">Отмена</button>
+      <button class="modal-btn primary" onclick="createGroup()">Создать звонок</button>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  GLOBALS
+// ═══════════════════════════════════════════════════════════════
+let socket = null;
+let currentUser = null;
+let iceServers = null;
+let incomingRingInterval = null;
+let groupsList = [];
+
+// DOM elements
+const authOverlay = document.getElementById('authOverlay');
+const appContainer = document.getElementById('app');
+const registerBtn = document.getElementById('registerBtn');
+const usersListDiv = document.getElementById('usersList');
+const groupsListDiv = document.getElementById('groupsList');
+const emptyUsers = document.getElementById('emptyUsers');
+const emptyGroups = document.getElementById('emptyGroups');
+const headerUsername = document.getElementById('headerUsername');
+const headerAvatar = document.getElementById('headerAvatar');
+const sidebar = document.getElementById('sidebar');
+
+// Helper
+function showToast(msg, type='') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+function escHtml(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+function toggleSidebar() { sidebar.classList.toggle('open'); }
+
+function switchTab(tab) {
+  document.getElementById('tabUsers').classList.toggle('active', tab === 'users');
+  document.getElementById('tabGroups').classList.toggle('active', tab === 'groups');
+  document.getElementById('usersPanel').classList.toggle('hidden', tab !== 'users');
+  document.getElementById('groupsPanel').classList.toggle('hidden', tab !== 'groups');
+  if (tab === 'groups' && groupsList.length === 0) loadGroups();
+}
+
+function quickLogin(name, id) {
+  document.getElementById('regUsername').value = name;
+  document.getElementById('regUserId').value = id;
+  registerBtn.click();
+}
+
+// ─── Fetch ICE config from server ─────────────────────────
+async function fetchIceConfig() {
+  try {
+    const res = await fetch('/api/ice-config');
+    const data = await res.json();
+    iceServers = data.iceServers || [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' }
+    ];
+  } catch(e) {
+    iceServers = [{ urls: 'stun:stun.l.google.com:19302' }];
+  }
+}
+
+// ─── REGISTRATION ─────────────────────────────────────────
+registerBtn.addEventListener('click', async () => {
+  const username = document.getElementById('regUsername').value.trim();
+  let userId = document.getElementById('regUserId').value.trim().toLowerCase();
+  if (!username || !userId) { showToast('Заполните все поля', 'error'); return; }
+  currentUser = { username, userId };
+  await fetchIceConfig();
+  const resp = await fetch('/api/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, userId })
+  });
+  if (!resp.ok) { showToast('Ошибка регистрации', 'error'); return; }
+
+  socket = io({ transports: ['websocket', 'polling'] });
+  socket.on('connect', () => {
+    socket.emit('register', { username, userId });
+  });
+  setupSocketListeners();
+
+  authOverlay.classList.add('hidden');
+  appContainer.classList.remove('hidden');
+  headerUsername.textContent = username;
+  headerAvatar.textContent = username[0].toUpperCase();
+});
+
+// ─── SOCKET HANDLERS ──────────────────────────────────────
+function setupSocketListeners() {
+  socket.on('user-list', renderUsers);
+  socket.on('incoming-call', showIncomingCall);
+  socket.on('call-error', ({ message }) => showToast(message, 'error'));
+  socket.on('call-rejected', () => showToast('Звонок отклонён', 'error'));
+  socket.on('call-ended', () => showToast('Звонок завершён'));
+
+  // Groups
+  socket.on('group-list', (groups) => {
+    groupsList = groups;
+    renderGroups(groups);
+  });
+  socket.on('group-created', ({ groupId }) => {
+    showToast('Группа создана', 'success');
+    loadGroups();
+  });
+  socket.on('admitted-to-group', () => {
+    showToast('Вас пустили в группу', 'success');
+  });
+  socket.on('rejected-from-group', () => {
+    showToast('Вас не пустили в группу', 'error');
+  });
+  socket.on('group-participants-update', () => {});
+}
+
+// ─── RENDER USERS (ONLY VIDEO CALL BUTTON) ────────────────
+function renderUsers(users) {
+  const me = currentUser.userId;
+  const others = users.filter(u => u.userId !== me);
+  if (!others.length) {
+    emptyUsers.style.display = 'block';
+    usersListDiv.innerHTML = '';
+    return;
+  }
+  emptyUsers.style.display = 'none';
+  usersListDiv.innerHTML = others.map(u => {
+    const letter = u.username[0].toUpperCase();
+    const busy = u.status === 'busy';
+    return `
+      <div class="user-card">
+        <div class="uc-avatar">${letter}<span class="status-dot${busy ? ' busy' : ''}"></span></div>
+        <div class="uc-info">
+          <div class="uc-name">${escHtml(u.username)}</div>
+          <div class="uc-status">${busy ? '🔴 Занят' : '🟢 Онлайн'}</div>
+        </div>
+        <div class="uc-actions">
+          <button class="uc-btn video" title="Видеозвонок" onclick="startCall('${u.userId}', '${escHtml(u.username)}', 'video')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── START CALL (PERSONAL) ────────────────────────────────
+window.startCall = (targetId, targetName, callType) => {
+  socket.emit('call-user', { targetId, callType });
+  const callData = {
+    type: 'personal',
+    myUserId: currentUser.userId,
+    myUsername: currentUser.username,
+    targetId,
+    targetName,
+    callType,
+    isIncoming: false,
+    iceServers
+  };
+  localStorage.setItem('callData', JSON.stringify(callData));
+  window.open('/call.html', '_blank', 'width=1000,height=700');
+};
+
+// ─── INCOMING CALL POPUP ──────────────────────────────────
+function showIncomingCall({ from, fromName, callType }) {
+  if (Notification.permission === 'granted') {
+    new Notification(`📞 Входящий звонок от ${fromName}`, { body: callType === 'video' ? 'Видеозвонок' : 'Аудиозвонок' });
+  }
+  document.querySelectorAll('.incoming-popup').forEach(el => el.remove());
+  const popup = document.createElement('div');
+  popup.className = 'incoming-popup';
+  popup.innerHTML = `
+    <div class="ip-header">
+      <div class="ip-avatar">${fromName[0].toUpperCase()}</div>
+      <div class="ip-info">
+        <h3>${escHtml(fromName)}</h3>
+        <p>${callType === 'video' ? '📹 Видеозвонок' : '🎙️ Аудиозвонок'}</p>
+      </div>
+    </div>
+    <div class="ip-actions">
+      <button class="ip-btn reject"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Отклонить</button>
+      <button class="ip-btn accept"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.5a19.79 19.79 0 01-3.07-8.67A2 2 0 012.18 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.35a16 16 0 006.72 6.72l1.71-1.71a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg> Ответить</button>
+    </div>
+  `;
+  document.body.appendChild(popup);
+  const acceptBtn = popup.querySelector('.accept');
+  const rejectBtn = popup.querySelector('.reject');
+  acceptBtn.onclick = () => {
+    popup.remove();
+    socket.emit('accept-call', { fromId: from });
+    const callData = {
+      type: 'personal',
+      myUserId: currentUser.userId,
+      myUsername: currentUser.username,
+      targetId: from,
+      targetName: fromName,
+      callType,
+      isIncoming: true,
+      iceServers
+    };
+    localStorage.setItem('callData', JSON.stringify(callData));
+    window.open('/call.html', '_blank', 'width=1000,height=700');
+  };
+  rejectBtn.onclick = () => {
+    popup.remove();
+    socket.emit('reject-call', { fromId: from });
+  };
+  setTimeout(() => {
+    if (popup.parentNode) rejectBtn.click();
+  }, 30000);
+}
+
+// ─── GROUPS ───────────────────────────────────────────────
+function openGroupModal() { document.getElementById('groupModal').classList.remove('hidden'); }
+function closeGroupModal() { document.getElementById('groupModal').classList.add('hidden'); }
+
+function createGroup() {
+  const groupName = document.getElementById('groupNameInput').value.trim();
+  if (!groupName) { showToast('Введите название группы', 'error'); return; }
+  const groupId = `grp_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+  socket.emit('create-group', { groupName, groupId });
+  const callData = {
+    type: 'group',
+    myUserId: currentUser.userId,
+    myUsername: currentUser.username,
+    groupId,
+    groupName,
+    isHost: true,
+    iceServers
+  };
+  localStorage.setItem('callData', JSON.stringify(callData));
+  closeGroupModal();
+  window.open('/call.html', '_blank', 'width=1000,height=700');
+}
+
+function loadGroups() { socket.emit('get-groups'); }
+
+function renderGroups(groups) {
+  if (!groups.length) {
+    emptyGroups.style.display = 'block';
+    groupsListDiv.innerHTML = '';
+    return;
+  }
+  emptyGroups.style.display = 'none';
+  groupsListDiv.innerHTML = groups.map(g => `
+    <div class="user-card" style="margin:4px 8px;">
+      <div class="uc-avatar">👥</div>
+      <div class="uc-info">
+        <div class="uc-name">${escHtml(g.name)}</div>
+        <div class="uc-status">Участников: ${g.participants}</div>
+      </div>
+      <div class="uc-actions">
+        <button class="uc-btn video" onclick="joinGroup('${g.groupId}', '${escHtml(g.name)}')">🔊</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.joinGroup = (groupId, groupName) => {
+  socket.emit('join-group-request', { groupId });
+  const callData = {
+    type: 'group',
+    myUserId: currentUser.userId,
+    myUsername: currentUser.username,
+    groupId,
+    groupName,
+    isHost: false,
+    iceServers
+  };
+  localStorage.setItem('callData', JSON.stringify(callData));
+  window.open('/call.html', '_blank', 'width=1000,height=700');
+};
+
+// Auto-load groups on tab switch
+document.getElementById('tabGroups').addEventListener('click', () => {
+  if (groupsList.length === 0) loadGroups();
+});
+
+// Notification permission
+if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+
+// Close sidebar on outside click
+document.addEventListener('click', (e) => {
+  if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !e.target.closest('.burger-btn')) {
+    sidebar.classList.remove('open');
+  }
+});
+</script>
+</body>
+</html>
