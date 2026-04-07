@@ -1,659 +1,712 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>TelegramCall - Бесплатные видеозвонки</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>CraneCall — Видеозвонки</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #080c14;
+  --surface:   #0f1624;
+  --surface2:  #162035;
+  --border:    rgba(62,130,255,0.2);
+  --border-b:  rgba(62,130,255,0.5);
+  --accent:    #3e82ff;
+  --accent2:   #00c4ff;
+  --danger:    #ff4757;
+  --success:   #2ed573;
+  --text:      #e8eaf6;
+  --muted:     #5a6a8a;
+  --card-bg:   rgba(15,22,36,0.95);
+  --glow:      rgba(62,130,255,0.15);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overflow:hidden; }
+body {
+  font-family:'Manrope', system-ui, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  background-image:
+    radial-gradient(ellipse 60% 50% at 50% -10%, rgba(62,130,255,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 80% 80%, rgba(0,196,255,0.06) 0%, transparent 60%);
+}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #0a0a0a;
-            color: #ffffff;
-            overflow: hidden;
-        }
+/* ── SCROLLBAR ─────────────────────────────────────────── */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border-b); border-radius:4px; }
 
-        /* Регистрация */
-        .auth-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
+/* ── AUTH ──────────────────────────────────────────────── */
+.auth-overlay {
+  position:fixed; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  z-index:200;
+  background:var(--bg);
+  background-image:radial-gradient(ellipse 70% 60% at 50% 0%, rgba(62,130,255,0.18) 0%, transparent 70%);
+}
+.auth-card {
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:44px 40px;
+  width:min(420px, 92vw);
+  text-align:center;
+  backdrop-filter:blur(20px);
+  box-shadow:0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(62,130,255,0.08) inset;
+  animation:fadeUp 0.4s ease;
+}
+@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 
-        .auth-card {
-            background: rgba(30, 30, 46, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 28px;
-            padding: 40px;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+.auth-logo {
+  width:64px; height:64px; border-radius:20px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 20px;
+  box-shadow:0 8px 32px rgba(62,130,255,0.35);
+  font-size:28px;
+}
+.auth-card h1 {
+  font-size:26px; font-weight:800; letter-spacing:-0.5px; margin-bottom:6px;
+  background:linear-gradient(135deg,#fff 30%,var(--accent2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.auth-card p { color:var(--muted); font-size:14px; margin-bottom:28px; }
 
-        .auth-card h1 {
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #2ea6ff, #0088cc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+.field-group { margin-bottom:12px; }
+.field-group label { display:block; text-align:left; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:6px; letter-spacing:0.5px; text-transform:uppercase; }
+.auth-input {
+  width:100%; padding:13px 16px;
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:12px; color:var(--text); font-size:15px; font-family:inherit;
+  transition:border-color 0.2s, box-shadow 0.2s;
+  outline:none;
+}
+.auth-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(62,130,255,0.12); }
+.auth-input::placeholder { color:var(--muted); }
 
-        .auth-input {
-            width: 100%;
-            padding: 14px;
-            margin: 12px 0;
-            background: #1a1a2e;
-            border: 1px solid #2ea6ff;
-            border-radius: 12px;
-            color: white;
-            font-size: 16px;
-        }
+.auth-btn {
+  width:100%; padding:14px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none; border-radius:12px; color:#fff;
+  font-size:15px; font-weight:700; font-family:inherit;
+  cursor:pointer; margin-top:20px;
+  transition:transform 0.15s, box-shadow 0.15s;
+  box-shadow:0 4px 20px rgba(62,130,255,0.3);
+}
+.auth-btn:hover { transform:translateY(-1px); box-shadow:0 8px 28px rgba(62,130,255,0.4); }
+.auth-btn:active { transform:translateY(0); }
 
-        .auth-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #2ea6ff, #0088cc);
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 20px;
-        }
+.auth-hint {
+  margin-top:16px; font-size:12px; color:var(--muted); line-height:1.5;
+}
+.auth-hint strong { color:var(--accent2); }
 
-        /* Основной интерфейс */
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
+.test-badge {
+  display:inline-flex; align-items:center; gap:6px;
+  background:rgba(62,130,255,0.1); border:1px solid rgba(62,130,255,0.25);
+  border-radius:20px; padding:6px 14px; font-size:12px; font-weight:600;
+  color:var(--accent2); cursor:pointer; margin-top:14px;
+  transition:background 0.2s;
+}
+.test-badge:hover { background:rgba(62,130,255,0.18); }
 
-        .telegram-header {
-            background: #1a1a2e;
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #2ea6ff;
-        }
+/* ── APP LAYOUT ────────────────────────────────────────── */
+.app { display:flex; flex-direction:column; height:100vh; }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 20px;
-            font-weight: 600;
-        }
+.header {
+  height:60px; flex-shrink:0;
+  background:var(--surface); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 20px;
+  backdrop-filter:blur(12px);
+}
+.header-logo { display:flex; align-items:center; gap:10px; font-size:17px; font-weight:800; letter-spacing:-0.3px; }
+.header-logo-icon {
+  width:34px; height:34px; border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center; font-size:16px;
+  box-shadow:0 4px 12px rgba(62,130,255,0.3);
+}
+.header-user { display:flex; align-items:center; gap:10px; }
+.header-username { font-size:14px; font-weight:600; color:var(--muted); }
+.avatar-btn {
+  width:36px; height:36px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; font-weight:700; cursor:pointer; border:none; color:#fff;
+  box-shadow:0 2px 8px rgba(62,130,255,0.25);
+}
 
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #2ea6ff, #0088cc);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+.main { display:flex; flex:1; overflow:hidden; }
 
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+/* ── SIDEBAR ───────────────────────────────────────────── */
+.sidebar {
+  width:300px; flex-shrink:0;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+}
+@media(max-width:768px) {
+  .sidebar { width:100%; position:fixed; z-index:50; top:60px; left:0; bottom:0; transform:translateX(-100%); transition:transform 0.3s cubic-bezier(.4,0,.2,1); }
+  .sidebar.open { transform:translateX(0); }
+}
 
-        .avatar {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #2ea6ff, #0088cc);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 18px;
-        }
+.sidebar-tabs {
+  display:flex; border-bottom:1px solid var(--border);
+}
+.tab-btn {
+  flex:1; padding:12px 8px; background:none; border:none; color:var(--muted);
+  font-size:12px; font-weight:600; font-family:inherit;
+  cursor:pointer; transition:color 0.2s; letter-spacing:0.3px;
+  text-transform:uppercase; border-bottom:2px solid transparent;
+}
+.tab-btn.active { color:var(--accent2); border-bottom-color:var(--accent2); }
 
-        .main-grid {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
+.sidebar-body { flex:1; overflow-y:auto; }
 
-        .contacts-sidebar {
-            width: 320px;
-            background: #0f0f1a;
-            border-right: 1px solid #2ea6ff;
-            display: flex;
-            flex-direction: column;
-        }
+/* ── USER CARD ─────────────────────────────────────────── */
+.user-card {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 16px; cursor:pointer;
+  transition:background 0.15s; border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.user-card:hover { background:var(--surface2); }
+.user-card:active { background:rgba(62,130,255,0.08); }
 
-        .contacts-header {
-            padding: 16px;
-            border-bottom: 1px solid #2ea6ff;
-            font-weight: 600;
-        }
+.uc-avatar {
+  width:46px; height:46px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:19px; font-weight:700; color:#fff; position:relative;
+}
+.status-dot {
+  position:absolute; bottom:1px; right:1px;
+  width:11px; height:11px; border-radius:50%;
+  border:2px solid var(--surface); background:var(--success);
+}
+.status-dot.busy { background:var(--danger); }
 
-        .contacts-list {
-            flex: 1;
-            overflow-y: auto;
-        }
+.uc-info { flex:1; min-width:0; }
+.uc-name { font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.uc-status { font-size:12px; color:var(--muted); margin-top:2px; }
 
-        .contact-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
+.uc-actions { display:flex; gap:6px; }
+.uc-btn {
+  width:34px; height:34px; border-radius:50%; border:none;
+  background:var(--surface2); color:var(--accent);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:background 0.2s, transform 0.1s;
+}
+.uc-btn:hover { background:rgba(62,130,255,0.2); }
+.uc-btn:active { transform:scale(0.92); }
+.uc-btn.video { color:var(--accent2); }
+.uc-btn svg { width:16px; height:16px; }
 
-        .contact-item:hover {
-            background: #1a1a2e;
-        }
+.empty-state {
+  padding:40px 20px; text-align:center; color:var(--muted);
+  font-size:14px; line-height:1.6;
+}
+.empty-state .icon { font-size:40px; display:block; margin-bottom:12px; }
 
-        .contact-avatar {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #2ea6ff, #0088cc);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: 600;
-        }
+/* ── GROUP SECTION ─────────────────────────────────────── */
+.group-create-btn {
+  margin:14px 16px 4px;
+  display:flex; align-items:center; gap:10px;
+  padding:12px 16px; background:rgba(62,130,255,0.1);
+  border:1px dashed rgba(62,130,255,0.3); border-radius:14px;
+  cursor:pointer; color:var(--accent2); font-size:13px; font-weight:600;
+  font-family:inherit; transition:background 0.2s;
+}
+.group-create-btn:hover { background:rgba(62,130,255,0.16); }
+.group-create-btn svg { width:18px; height:18px; }
 
-        .contact-info {
-            flex: 1;
-        }
+/* ── MAIN AREA ─────────────────────────────────────────── */
+.call-area { flex:1; display:flex; flex-direction:column; overflow:hidden; }
 
-        .contact-name {
-            font-weight: 600;
-        }
+.call-placeholder {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:16px;
+  color:var(--muted); text-align:center; padding:20px;
+}
+.call-placeholder .big-icon { font-size:64px; filter:grayscale(0.3); }
+.call-placeholder h2 { font-size:22px; font-weight:700; color:var(--text); }
+.call-placeholder p { font-size:14px; max-width:300px; line-height:1.6; }
 
-        .call-buttons {
-            display: flex;
-            gap: 8px;
-        }
+/* ── INCOMING CALL POPUP ───────────────────────────────── */
+.incoming-popup {
+  position:fixed; bottom:24px; right:24px; z-index:300;
+  background:var(--surface2);
+  border:1px solid var(--border-b);
+  border-radius:20px; padding:20px;
+  width:min(340px, 90vw);
+  box-shadow:0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(62,130,255,0.1) inset;
+  animation:slideInRight 0.35s cubic-bezier(.4,0,.2,1);
+}
+@keyframes slideInRight { from { transform:translateX(110%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+.incoming-popup.hiding { animation:slideOutRight 0.3s forwards; }
+@keyframes slideOutRight { to { transform:translateX(110%); opacity:0; } }
 
-        .call-icon {
-            background: #2ea6ff;
-            border: none;
-            color: white;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 18px;
-        }
+.ip-header { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+.ip-avatar {
+  width:52px; height:52px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; font-weight:700; flex-shrink:0;
+  animation:ring 1.2s ease-in-out infinite;
+  box-shadow:0 0 0 0 rgba(62,130,255,0.4);
+}
+@keyframes ring {
+  0%   { box-shadow:0 0 0 0 rgba(62,130,255,0.4); }
+  70%  { box-shadow:0 0 0 14px rgba(62,130,255,0); }
+  100% { box-shadow:0 0 0 0 rgba(62,130,255,0); }
+}
+.ip-info h3 { font-size:16px; font-weight:700; }
+.ip-info p  { font-size:13px; color:var(--muted); margin-top:3px; }
 
-        .call-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #0a0a0a;
-        }
+.ip-actions { display:flex; gap:10px; }
+.ip-btn {
+  flex:1; padding:12px; border:none; border-radius:12px;
+  font-size:13px; font-weight:700; font-family:inherit;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+  transition:transform 0.1s, filter 0.2s;
+}
+.ip-btn:active { transform:scale(0.96); }
+.ip-btn.accept { background:linear-gradient(135deg,var(--success),#00b894); color:#fff; }
+.ip-btn.reject { background:linear-gradient(135deg,var(--danger),#c0392b); color:#fff; }
+.ip-btn svg { width:16px; height:16px; }
 
-        .call-header {
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid #2ea6ff;
-        }
+/* ── MODAL (Create group) ───────────────────────────────── */
+.modal-overlay {
+  position:fixed; inset:0; z-index:400;
+  background:rgba(8,12,20,0.8); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center;
+}
+.modal {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:20px; padding:28px; width:min(380px,90vw);
+  animation:fadeUp 0.3s ease;
+}
+.modal h2 { font-size:18px; font-weight:800; margin-bottom:20px; }
+.modal-input {
+  width:100%; padding:12px 14px; background:var(--surface);
+  border:1px solid var(--border); border-radius:10px;
+  color:var(--text); font-size:14px; font-family:inherit;
+  margin-bottom:16px; outline:none;
+  transition:border-color 0.2s;
+}
+.modal-input:focus { border-color:var(--accent); }
+.modal-actions { display:flex; gap:10px; margin-top:4px; }
+.modal-btn {
+  flex:1; padding:12px; border:none; border-radius:10px;
+  font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;
+  transition:filter 0.2s;
+}
+.modal-btn.primary { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; }
+.modal-btn.secondary { background:var(--surface); color:var(--muted); }
 
-        .video-container {
-            flex: 1;
-            position: relative;
-            background: #000;
-        }
+/* ── NOTIFICATION ───────────────────────────────────────── */
+.toast {
+  position:fixed; top:72px; left:50%; transform:translateX(-50%);
+  background:var(--surface2); border:1px solid var(--border-b);
+  border-radius:12px; padding:10px 18px;
+  font-size:13px; font-weight:600; z-index:500;
+  animation:toastIn 0.3s ease; white-space:nowrap;
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);
+}
+.toast.error { border-color:rgba(255,71,87,0.5); color:var(--danger); }
+.toast.success { border-color:rgba(46,213,115,0.5); color:var(--success); }
+@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(-8px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
 
-        .remote-video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+.hidden { display:none !important; }
 
-        .local-video {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 200px;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 12px;
-            border: 2px solid #2ea6ff;
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        .call-controls {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            padding: 20px;
-            background: #1a1a2e;
-        }
-
-        .control-btn {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            font-size: 24px;
-            transition: transform 0.2s;
-        }
-
-        .control-btn.end-call {
-            background: #dc2626;
-            color: white;
-        }
-
-        .incoming-call {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #1a1a2e;
-            border: 2px solid #2ea6ff;
-            border-radius: 16px;
-            padding: 16px;
-            display: flex;
-            gap: 15px;
-            z-index: 200;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .call-status-text {
-            text-align: center;
-            padding: 40px;
-            color: #8b949e;
-        }
-    </style>
+/* ── MOBILE BURGER ─────────────────────────────────────── */
+.burger-btn {
+  display:none; width:36px; height:36px; border-radius:8px;
+  background:none; border:none; color:var(--text); cursor:pointer;
+  align-items:center; justify-content:center;
+}
+@media(max-width:768px) {
+  .burger-btn { display:flex; }
+  .call-area .call-placeholder h2 { font-size:18px; }
+}
+</style>
 </head>
 <body>
-<div id="authContainer" class="auth-container">
-    <div class="auth-card">
-        <div class="logo-icon" style="margin: 0 auto 20px; width: 60px; height: 60px; font-size: 30px;">📞</div>
-        <h1>TelegramCall</h1>
-        <p style="color: #8b949e; margin-bottom: 30px;">Бесплатные видеозвонки</p>
-        <input type="text" id="regUsername" class="auth-input" placeholder="Ваше имя">
-        <input type="text" id="regUserId" class="auth-input" placeholder="Ваш ID (например: mama)">
-        <button class="auth-btn" id="registerBtn">Зарегистрироваться</button>
-        <p style="font-size: 12px; color: #8b949e; margin-top: 20px;">Скажите свой ID маме, чтобы она могла вам позвонить!</p>
+
+<!-- ── AUTH ─────────────────────────────────────────────── -->
+<div id="authOverlay" class="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">📞</div>
+    <h1>CraneCall</h1>
+    <p>Бесплатные P2P видеозвонки</p>
+
+    <div class="field-group">
+      <label>Ваше имя</label>
+      <input type="text" id="regUsername" class="auth-input" placeholder="Например: Мама" autocomplete="off">
     </div>
+    <div class="field-group">
+      <label>Ваш ID</label>
+      <input type="text" id="regUserId" class="auth-input" placeholder="Например: mama" autocomplete="off">
+    </div>
+    <button class="auth-btn" id="registerBtn">Войти →</button>
+
+    <div class="auth-hint">
+      Скажите свой ID другим пользователям, чтобы они могли вас найти.<br>
+      ID нечувствителен к регистру.
+    </div>
+
+    <!-- БЫСТРЫЙ ТЕСТ -->
+    <div class="test-badge" id="testMode1" onclick="quickLogin('Тест1','test1')">
+      ⚡ Быстрый тест: Test1
+    </div>
+    <div class="test-badge" id="testMode2" onclick="quickLogin('Тест2','test2')" style="margin-left:8px;">
+      ⚡ Быстрый тест: Test2
+    </div>
+  </div>
 </div>
 
-<div id="appContainer" class="app-container hidden">
-    <div class="telegram-header">
-        <div class="logo">
-            <div class="logo-icon">📞</div>
-            <span>TelegramCall</span>
-        </div>
-        <div class="user-info">
-            <span id="currentUserName"></span>
-            <div class="avatar" id="userAvatar"></div>
-        </div>
+<!-- ── APP ──────────────────────────────────────────────── -->
+<div id="app" class="app hidden">
+  <header class="header">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="burger-btn" id="burgerBtn" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <div class="header-logo">
+        <div class="header-logo-icon">📞</div>
+        <span>CraneCall</span>
+      </div>
     </div>
-
-    <div class="main-grid">
-        <div class="contacts-sidebar">
-            <div class="contacts-header">Контакты онлайн</div>
-            <div class="contacts-list" id="contactsList"></div>
-        </div>
-
-        <div class="call-area" id="callArea">
-            <div class="call-header">
-                <h2 id="callWithName">Готов к звонкам</h2>
-            </div>
-            <div id="callContent">
-                <div class="call-status-text">
-                    📞 Выберите контакт и нажмите на звонок<br>
-                    <small style="color: #8b949e;">Бесплатные P2P видеозвонки</small>
-                </div>
-            </div>
-        </div>
+    <div class="header-user">
+      <span class="header-username" id="headerUsername"></span>
+      <button class="avatar-btn" id="headerAvatar"></button>
     </div>
+  </header>
+
+  <div class="main">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-tabs">
+        <button class="tab-btn active" id="tabUsers" onclick="switchTab('users')">Контакты</button>
+        <button class="tab-btn" id="tabGroups" onclick="switchTab('groups')">Группы</button>
+      </div>
+      <div class="sidebar-body" id="sidebarBody">
+        <div id="usersPanel">
+          <div class="empty-state" id="emptyUsers">
+            <span class="icon">👥</span>
+            Нет пользователей онлайн.<br>Попросите друга войти!
+          </div>
+          <div id="usersList"></div>
+        </div>
+        <div id="groupsPanel" class="hidden">
+          <button class="group-create-btn" onclick="openGroupModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            Создать групповой звонок
+          </button>
+          <div class="empty-state" id="emptyGroups">
+            <span class="icon">🎙️</span>
+            Создайте группу или войдите в существующую
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CALL AREA -->
+    <main class="call-area" id="callArea">
+      <div class="call-placeholder">
+        <div class="big-icon">📞</div>
+        <h2>Готов к звонкам</h2>
+        <p>Выберите контакт слева и нажмите кнопку звонка. Звонки работают прямо в браузере — никаких установок!</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ── CREATE GROUP MODAL ───────────────────────────────── -->
+<div id="groupModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2>🎙️ Новый групповой звонок</h2>
+    <input type="text" id="groupNameInput" class="modal-input" placeholder="Название группы (например: Семья)">
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeGroupModal()">Отмена</button>
+      <button class="modal-btn primary" onclick="createGroup()">Создать звонок</button>
+    </div>
+  </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    let socket = null;
-    let currentUser = null;
-    let peerConnection = null;
-    let localStream = null;
-    let currentCall = null;
-    let pendingCall = null;
+// ═══════════════════════════════════════════════════
+//  GLOBALS
+// ═══════════════════════════════════════════════════
+let socket     = null;
+let currentUser = null;
+let iceServers = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' }
+];
 
-    // DOM элементы
-    const authContainer = document.getElementById('authContainer');
-    const appContainer = document.getElementById('appContainer');
-    const registerBtn = document.getElementById('registerBtn');
-    const contactsList = document.getElementById('contactsList');
+// Звук входящего звонка
+let ringAudio = null;
+function startRing() {
+  try {
+    const ctx = new AudioContext();
+    function beep() {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 440; o.type = 'sine';
+      g.gain.setValueAtTime(0.3, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.6);
+    }
+    beep();
+    ringAudio = setInterval(beep, 1400);
+  } catch(e) {}
+}
+function stopRing() { if (ringAudio) { clearInterval(ringAudio); ringAudio = null; } }
 
-    // Регистрация
-    registerBtn.addEventListener('click', async () => {
-        const username = document.getElementById('regUsername').value.trim();
-        const userId = document.getElementById('regUserId').value.trim();
-        
-        if (!username || !userId) {
-            alert('Заполните все поля');
-            return;
-        }
-        
-        currentUser = { username, userId };
-        
-        // Регистрация на сервере
-        const response = await fetch('/api/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, userId })
-        });
-        
-        if (response.ok) {
-            // Подключение к WebSocket
-            socket = io();
-            
-            socket.on('connect', () => {
-                socket.emit('register', { username, userId });
-            });
-            
-            setupSocketListeners();
-            
-            authContainer.classList.add('hidden');
-            appContainer.classList.remove('hidden');
-            document.getElementById('currentUserName').textContent = username;
-            document.getElementById('userAvatar').textContent = username[0].toUpperCase();
-        }
+// ═══════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════
+function quickLogin(name, id) {
+  document.getElementById('regUsername').value = name;
+  document.getElementById('regUserId').value = id;
+  document.getElementById('registerBtn').click();
+}
+
+document.getElementById('registerBtn').addEventListener('click', async () => {
+  const username = document.getElementById('regUsername').value.trim();
+  const userId   = document.getElementById('regUserId').value.trim().toLowerCase();
+  if (!username || !userId) { showToast('Заполните все поля', 'error'); return; }
+
+  currentUser = { username, userId };
+  await fetch('/api/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username,userId}) });
+
+  // Загрузить ICE конфигурацию
+  try {
+    const r = await fetch('/api/ice-config');
+    const d = await r.json();
+    iceServers = d.iceServers;
+  } catch(e) {}
+
+  socket = io({ transports:['websocket','polling'] });
+  socket.on('connect', () => {
+    socket.emit('register', { username, userId });
+    console.log('[socket] connected');
+  });
+  setupSocketListeners();
+
+  document.getElementById('authOverlay').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('headerUsername').textContent = username;
+  document.getElementById('headerAvatar').textContent = username[0].toUpperCase();
+
+  // Запрос уведомлений
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+});
+
+// ═══════════════════════════════════════════════════
+//  SOCKET LISTENERS
+// ═══════════════════════════════════════════════════
+function setupSocketListeners() {
+  socket.on('user-list', renderUsers);
+  socket.on('incoming-call', showIncomingCall);
+  socket.on('call-error', ({ message }) => showToast(message, 'error'));
+  socket.on('call-rejected', () => { showToast('Звонок отклонён', 'error'); stopRing(); });
+  socket.on('call-ended',   () => { showToast('Звонок завершён'); stopRing(); });
+}
+
+// ═══════════════════════════════════════════════════
+//  USERS LIST
+// ═══════════════════════════════════════════════════
+function renderUsers(users) {
+  const me = currentUser?.userId;
+  const others = users.filter(u => u.userId !== me);
+  const el = document.getElementById('usersList');
+  const empty = document.getElementById('emptyUsers');
+
+  if (!others.length) { empty.style.display='block'; el.innerHTML=''; return; }
+  empty.style.display = 'none';
+
+  el.innerHTML = others.map(u => {
+    const letter = u.username[0].toUpperCase();
+    const busy   = u.status === 'busy';
+    const statusLabel = busy ? '🔴 Занят' : '🟢 Онлайн';
+    return `
+    <div class="user-card">
+      <div class="uc-avatar">${letter}<span class="status-dot${busy?' busy':''}"></span></div>
+      <div class="uc-info">
+        <div class="uc-name">${escHtml(u.username)}</div>
+        <div class="uc-status">${statusLabel}</div>
+      </div>
+      <div class="uc-actions">
+        <button class="uc-btn" title="Аудиозвонок" onclick="initiateCall('${u.userId}','${escHtml(u.username)}','audio')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.5a19.79 19.79 0 01-3.07-8.67A2 2 0 012.18 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.35a16 16 0 006.72 6.72l1.71-1.71a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+          </svg>
+        </button>
+        <button class="uc-btn video" title="Видеозвонок" onclick="initiateCall('${u.userId}','${escHtml(u.username)}','video')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  INITIATE CALL  →  открываем call.html
+// ═══════════════════════════════════════════════════
+function initiateCall(targetId, targetName, callType) {
+  socket.emit('call-user', { targetId, callType });
+
+  // Передаём данные через localStorage — call.html подхватит
+  localStorage.setItem('callData', JSON.stringify({
+    type: 'personal',
+    myUserId:   currentUser.userId,
+    myUsername: currentUser.username,
+    targetId,
+    targetName,
+    callType,
+    isIncoming: false,
+    iceServers
+  }));
+
+  window.open('/call', '_blank', 'width=900,height=650');
+}
+
+// ═══════════════════════════════════════════════════
+//  INCOMING CALL POPUP
+// ═══════════════════════════════════════════════════
+function showIncomingCall({ from, fromName, callType }) {
+  stopRing(); startRing();
+
+  // Push-уведомление
+  if (Notification.permission === 'granted') {
+    new Notification(`📞 Входящий звонок от ${fromName}`, {
+      body: callType === 'video' ? 'Видеозвонок' : 'Аудиозвонок',
+      icon: '/favicon.ico'
     });
+  }
 
-    function setupSocketListeners() {
-        socket.on('user-list', (users) => {
-            renderContacts(users.filter(u => u.userId !== currentUser.userId));
-        });
-        
-        socket.on('incoming-call', (data) => {
-            showIncomingCall(data);
-        });
-        
-        socket.on('call-accepted', async (data) => {
-            document.getElementById('callStatusText').innerHTML = 'Соединение устанавливается...';
-            await startCall(data.targetId, currentCall?.callType);
-        });
-        
-        socket.on('call-rejected', () => {
-            endCall();
-            showNotification('Звонок отклонён');
-        });
-        
-        socket.on('call-ended', () => {
-            endCall();
-            showNotification('Звонок завершён');
-        });
-        
-        socket.on('offer', async (data) => {
-            await handleOffer(data);
-        });
-        
-        socket.on('answer', async (data) => {
-            await handleAnswer(data);
-        });
-        
-        socket.on('ice-candidate', async (data) => {
-            if (peerConnection) {
-                await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-            }
-        });
+  // Удаляем старые попапы
+  document.querySelectorAll('.incoming-popup').forEach(el => el.remove());
+
+  const popup = document.createElement('div');
+  popup.className = 'incoming-popup';
+  popup.innerHTML = `
+    <div class="ip-header">
+      <div class="ip-avatar">${fromName[0].toUpperCase()}</div>
+      <div class="ip-info">
+        <h3>${escHtml(fromName)}</h3>
+        <p>${callType === 'video' ? '📹 Видеозвонок' : '🎙️ Аудиозвонок'}</p>
+      </div>
+    </div>
+    <div class="ip-actions">
+      <button class="ip-btn reject" id="rejectBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+        Отклонить
+      </button>
+      <button class="ip-btn accept" id="acceptBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+          <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.5a19.79 19.79 0 01-3.07-8.67A2 2 0 012.18 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.35a16 16 0 006.72 6.72l1.71-1.71a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+        </svg>
+        Ответить
+      </button>
+    </div>
+  `;
+  document.body.appendChild(popup);
+
+  popup.querySelector('#rejectBtn').onclick = () => {
+    socket.emit('reject-call', { fromId: from });
+    stopRing(); popup.remove();
+  };
+  popup.querySelector('#acceptBtn').onclick = () => {
+    stopRing();
+    localStorage.setItem('callData', JSON.stringify({
+      type: 'personal',
+      myUserId:   currentUser.userId,
+      myUsername: currentUser.username,
+      targetId: from,
+      targetName: fromName,
+      callType,
+      isIncoming: true,
+      iceServers
+    }));
+    socket.emit('accept-call', { fromId: from });
+    window.open('/call', '_blank', 'width=900,height=650');
+    popup.remove();
+  };
+
+  // Автоотклонение через 30 сек
+  setTimeout(() => {
+    if (document.body.contains(popup)) {
+      socket.emit('reject-call', { fromId: from });
+      stopRing(); popup.remove();
     }
+  }, 30000);
+}
 
-    async function makeCall(targetId, callType) {
-        currentCall = { targetId, callType };
-        
-        try {
-            localStream = await navigator.mediaDevices.getUserMedia({
-                video: callType === 'video',
-                audio: true
-            });
-            
-            peerConnection = new RTCPeerConnection({
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-            });
-            
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
-            });
-            
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('ice-candidate', {
-                        targetId: targetId,
-                        candidate: event.candidate
-                    });
-                }
-            };
-            
-            peerConnection.ontrack = (event) => {
-                const remoteVideo = document.getElementById('remoteVideo');
-                if (remoteVideo && event.streams[0]) {
-                    remoteVideo.srcObject = event.streams[0];
-                }
-            };
-            
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-            
-            socket.emit('offer', {
-                targetId: targetId,
-                offer: offer
-            });
-            
-            showCallUI(callType);
-            socket.emit('call-user', { targetId, callType });
-            
-        } catch (error) {
-            console.error('Error starting call:', error);
-            alert('Не удалось начать звонок. Проверьте микрофон и камеру.');
-        }
-    }
+// ═══════════════════════════════════════════════════
+//  ГРУППЫ
+// ═══════════════════════════════════════════════════
+function switchTab(tab) {
+  document.getElementById('tabUsers').classList.toggle('active', tab === 'users');
+  document.getElementById('tabGroups').classList.toggle('active', tab === 'groups');
+  document.getElementById('usersPanel').classList.toggle('hidden', tab !== 'users');
+  document.getElementById('groupsPanel').classList.toggle('hidden', tab !== 'groups');
+}
 
-    async function handleOffer(data) {
-        if (!peerConnection) {
-            peerConnection = new RTCPeerConnection({
-                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-            });
-            
-            if (localStream) {
-                localStream.getTracks().forEach(track => {
-                    peerConnection.addTrack(track, localStream);
-                });
-            }
-            
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('ice-candidate', {
-                        targetId: data.from,
-                        candidate: event.candidate
-                    });
-                }
-            };
-            
-            peerConnection.ontrack = (event) => {
-                const remoteVideo = document.getElementById('remoteVideo');
-                if (remoteVideo && event.streams[0]) {
-                    remoteVideo.srcObject = event.streams[0];
-                }
-            };
-        }
-        
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        
-        socket.emit('answer', {
-            targetId: data.from,
-            answer: answer
-        });
-    }
+function openGroupModal()  { document.getElementById('groupModal').classList.remove('hidden'); }
+function closeGroupModal() { document.getElementById('groupModal').classList.add('hidden'); }
 
-    async function handleAnswer(data) {
-        if (peerConnection) {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-        }
-    }
+function createGroup() {
+  const name = document.getElementById('groupNameInput').value.trim();
+  if (!name) { showToast('Введите название группы', 'error'); return; }
+  const groupId = `grp_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
 
-    function showCallUI(callType) {
-        const callContent = document.getElementById('callContent');
-        callContent.innerHTML = `
-            <div class="video-container" id="videoContainer">
-                ${callType === 'video' ? `
-                    <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
-                    <video id="localVideo" class="local-video" autoplay playsinline muted></video>
-                ` : `
-                    <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
-                        <div style="text-align: center;">
-                            <div style="font-size: 80px;">🎙️</div>
-                            <div>Аудиозвонок в процессе...</div>
-                        </div>
-                    </div>
-                `}
-            </div>
-            <div class="call-controls">
-                <button class="control-btn" id="endCallBtn" style="background: #dc2626;">📞</button>
-            </div>
-        `;
-        
-        if (callType === 'video' && localStream) {
-            document.getElementById('localVideo').srcObject = localStream;
-        }
-        
-        document.getElementById('endCallBtn').onclick = () => {
-            endCall();
-            socket.emit('end-call', { targetId: currentCall?.targetId });
-        };
-    }
+  socket.emit('create-group', { groupName: name, groupId });
 
-    function showIncomingCall(data) {
-        pendingCall = data;
-        const notification = document.createElement('div');
-        notification.className = 'incoming-call';
-        notification.id = 'incomingCall';
-        notification.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div class="contact-avatar" style="width: 50px; height: 50px;">${data.fromName[0].toUpperCase()}</div>
-                <div>
-                    <div><strong>${data.fromName}</strong></div>
-                    <div>${data.callType === 'video' ? '📹 Видеозвонок' : '🎙️ Аудиозвонок'}</div>
-                </div>
-                <button id="acceptCallBtn" style="background: #22c55e; border: none; width: 48px; height: 48px; border-radius: 50%; font-size: 24px; cursor: pointer;">✅</button>
-                <button id="rejectCallBtn" style="background: #dc2626; border: none; width: 48px; height: 48px; border-radius: 50%; font-size: 24px; cursor: pointer;">❌</button>
-            </div>
-        `;
-        document.body.appendChild(notification);
-        
-        document.getElementById('acceptCallBtn').onclick = async () => {
-            notification.remove();
-            currentCall = { targetId: data.from, callType: data.callType };
-            
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({
-                    video: data.callType === 'video',
-                    audio: true
-                });
-                
-                showCallUI(data.callType);
-                socket.emit('accept-call', { fromId: data.from });
-            } catch (error) {
-                console.error(error);
-                alert('Не удалось получить доступ к камере/микрофону');
-            }
-        };
-        
-        document.getElementById('rejectCallBtn').onclick = () => {
-            notification.remove();
-            socket.emit('reject-call', { fromId: data.from });
-        };
-    }
+  localStorage.setItem('callData', JSON.stringify({
+    type: 'group',
+    myUserId:   currentUser.userId,
+    myUsername: currentUser.username,
+    groupId,
+    groupName: name,
+    isHost: true,
+    iceServers
+  }));
 
-    function endCall() {
-        if (peerConnection) {
-            peerConnection.close();
-            peerConnection = null;
-        }
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-            localStream = null;
-        }
-        currentCall = null;
-        
-        const callContent = document.getElementById('callContent');
-        callContent.innerHTML = `
-            <div class="call-status-text">
-                📞 Звонок завершён<br>
-                <small style="color: #8b949e;">Выберите контакт для нового звонка</small>
-            </div>
-        `;
-    }
+  closeGroupModal();
+  window.open('/call', '_blank', 'width=900,height=700');
+}
 
-    function renderContacts(users) {
-        if (users.length === 0) {
-            contactsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #8b949e;">Нет пользователей онлайн</div>';
-            return;
-        }
-        
-        contactsList.innerHTML = users.map(user => `
-            <div class="contact-item">
-                <div class="contact-avatar">${user.username[0].toUpperCase()}</div>
-                <div class="contact-info">
-                    <div class="contact-name">${user.username}</div>
-                    <div style="font-size: 12px; color: #2ea6ff;">● Онлайн</div>
-                </div>
-                <div class="call-buttons">
-                    <button class="call-icon" onclick="makeCall('${user.userId}', 'audio')">🎙️</button>
-                    <button class="call-icon" onclick="makeCall('${user.userId}', 'video')">📹</button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    function showNotification(message) {
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            background: #1a1a2e;
-            border-left: 4px solid #2ea6ff;
-            padding: 12px 20px;
-            border-radius: 8px;
-            z-index: 1000;
-            animation: slideIn 0.3s ease;
-        `;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        setTimeout(() => notification.remove(), 3000);
-    }
-
-    window.makeCall = makeCall;
+// ═══════════════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════════════
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+function showToast(msg, type='') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+function escHtml(s) { return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 </script>
 </body>
 </html>
