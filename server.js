@@ -139,7 +139,7 @@ io.on('connection', (socket) => {
     broadcastUserList();
   });
 
-  // ─── WebRTC сигналинг (личный) ──────────────────────────────
+  // ─── WebRTC СИГНАЛИНГ (личный) ──────────────────────────────
   socket.on('offer', ({ targetId, offer }) => {
     const sid = userSockets.get(targetId);
     if (sid) io.to(sid).emit('offer', { from: socket.userId, offer });
@@ -263,7 +263,7 @@ io.on('connection', (socket) => {
     socket.emit('group-list', list);
   });
 
-  // ─── WebRTC сигналинг (групповой) ───────────────────────────
+  // ─── WebRTC СИГНАЛИНГ (групповой) ───────────────────────────
   socket.on('group-offer', ({ groupId, targetId, offer }) => {
     const sid = userSockets.get(targetId);
     if (sid) io.to(sid).emit('group-offer', { from: socket.userId, fromName: socket.username, offer });
