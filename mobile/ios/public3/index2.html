@@ -368,7 +368,7 @@
       color: #8b9dc3;
     }
 
-    /* Incoming call popup */
+    /* Incoming call popup (iOS style) */
     .incoming-popup {
       position: fixed;
       bottom: 24px;
@@ -666,7 +666,7 @@
         iceServers
       }));
       socket.emit('accept-call', { fromId: from });
-      window.open('/call', '_blank', 'width=1000,height=700');
+      window.open('/ios/call', '_blank');
     };
     const reject = () => {
       popup.remove();
@@ -717,7 +717,7 @@
       iceServers
     }));
     socket.emit('call-user', { targetId, callType: 'video' });
-    window.open('/call', '_blank', 'width=1000,height=700');
+    window.open('/ios/call', '_blank');
     setTimeout(() => { if (callState === 'calling') callState = 'idle'; }, 5000);
   };
 
@@ -743,7 +743,7 @@
       iceServers
     }));
     closeGroupModal();
-    window.open('/call', '_blank', 'width=1000,height=700');
+    window.open('/ios/call', '_blank');
   }
   window.joinGroup = (groupId, groupName) => {
     localStorage.setItem('callData', JSON.stringify({
@@ -756,7 +756,7 @@
       iceServers
     }));
     socket.emit('join-group-request', { groupId });
-    window.open('/call', '_blank', 'width=1000,height=700');
+    window.open('/ios/call', '_blank');
   };
   function loadGroups() {
     socket.emit('get-groups');
