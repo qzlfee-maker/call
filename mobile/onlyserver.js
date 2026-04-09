@@ -16,9 +16,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ========== Хранилище ==========
-const users = new Map();       // socketId -> { username, userId, status }
-const userSockets = new Map(); // userId -> socketId
+// ========== Хранилище (только личные звонки) ==========
+const users       = new Map(); // socketId → { username, userId, status }
+const userSockets = new Map(); // userId → socketId
 
 // Бесплатные STUN/TURN серверы
 const ICE_SERVERS = [
@@ -203,5 +203,5 @@ function broadcastUserList() {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 CraneCall server (only) running on port ${PORT}`);
+  console.log(`🚀 CraneCall server (only personal calls) running on port ${PORT}`);
 });
