@@ -3,17 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>CraneCall — iOS видеозвонки</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <title>CraneCall — iOS звонок</title>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       background: #000;
       font-family: 'Manrope', system-ui, sans-serif;
@@ -23,17 +16,14 @@
       position: fixed;
       width: 100%;
     }
-
-    /* ========== MAIN WRAPPER ========== */
-    .call-wrapper {
+    .call-container {
       display: flex;
       flex-direction: column;
       height: 100%;
       position: relative;
       background: #000;
     }
-
-    /* ========== TOP BAR (iOS style) ========== */
+    /* Top bar */
     .call-top-bar {
       position: absolute;
       top: 0;
@@ -64,18 +54,9 @@
       justify-content: center;
       font-size: 18px;
       font-weight: 700;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
     }
-    .call-info h2 {
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.2;
-    }
-    .call-info p {
-      font-size: 11px;
-      color: rgba(255,255,255,0.7);
-      margin-top: 2px;
-    }
+    .call-info h2 { font-size: 16px; font-weight: 700; line-height: 1.2; }
+    .call-info p { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; }
     .call-timer {
       font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
@@ -96,10 +77,9 @@
       width: 3px;
       border-radius: 2px;
       background: #2ed573;
-      transition: height 0.3s, background 0.3s;
+      transition: height 0.3s;
     }
-
-    /* ========== VIDEO AREA ========== */
+    /* Video area */
     .video-area {
       flex: 1;
       position: relative;
@@ -135,25 +115,16 @@
       font-size: 42px;
       font-weight: 700;
       margin-bottom: 16px;
-      box-shadow: 0 0 0 6px rgba(62,130,255,0.2);
       animation: gentlePulse 2s infinite;
     }
     @keyframes gentlePulse {
       0%,100% { box-shadow: 0 0 0 6px rgba(62,130,255,0.15); }
-      50%      { box-shadow: 0 0 0 12px rgba(62,130,255,0.25); }
+      50% { box-shadow: 0 0 0 12px rgba(62,130,255,0.25); }
     }
-    .no-video-name {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-    .no-video-sub {
-      font-size: 12px;
-      color: #8b9dc3;
-    }
-
-    /* Local video (draggable) */
-    .local-video-pip {
+    .no-video-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .no-video-sub { font-size: 12px; color: #8b9dc3; }
+    /* Local PiP */
+    .local-pip {
       position: absolute;
       bottom: 80px;
       right: 12px;
@@ -167,15 +138,8 @@
       z-index: 15;
       background: #000;
     }
-    .local-video-pip.expanded {
-      width: 160px;
-      height: 120px;
-    }
-    .local-video-pip video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    .local-pip.expanded { width: 160px; height: 120px; }
+    .local-pip video { width: 100%; height: 100%; object-fit: cover; }
     .pip-toggle {
       position: absolute;
       top: 4px;
@@ -193,53 +157,7 @@
       justify-content: center;
       z-index: 2;
     }
-
-    /* Group grid (iOS style) */
-    .group-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 4px;
-      height: 100%;
-      width: 100%;
-      background: #000;
-      overflow-y: auto;
-      padding: 4px;
-    }
-    .participant-tile {
-      position: relative;
-      background: #162035;
-      border-radius: 12px;
-      overflow: hidden;
-      aspect-ratio: 16 / 9;
-    }
-    .participant-tile video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .participant-label {
-      position: absolute;
-      bottom: 6px;
-      left: 6px;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(4px);
-      padding: 3px 8px;
-      border-radius: 16px;
-      font-size: 10px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .speaking-indicator {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #2ed573;
-      animation: pulse 1s infinite;
-    }
-
-    /* Controls (iOS bottom bar) */
+    /* Controls */
     .call-controls {
       position: absolute;
       bottom: 0;
@@ -297,9 +215,7 @@
     .ctrl-btn.active .ctrl-icon { background: rgba(62,130,255,0.6); }
     .ctrl-btn.off .ctrl-icon { background: rgba(255,71,87,0.4); }
     .ctrl-btn.off .ctrl-label { color: #ff4757; }
-    .ctrl-btn.end-call .ctrl-icon { background: #ff4757; box-shadow: 0 2px 8px rgba(255,71,87,0.4); }
-
-    /* Secondary buttons */
+    .ctrl-btn.end-call .ctrl-icon { background: #ff4757; }
     .sec-btn {
       display: flex;
       align-items: center;
@@ -313,123 +229,6 @@
       font-weight: 600;
       cursor: pointer;
     }
-    .sec-btn.active { background: rgba(62,130,255,0.4); }
-
-    /* Side panels */
-    .side-panel {
-      position: absolute;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      width: min(320px, 85vw);
-      background: #0f1624;
-      border-left: 1px solid rgba(62,130,255,0.3);
-      z-index: 30;
-      display: flex;
-      flex-direction: column;
-      transform: translateX(100%);
-      transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-    }
-    .side-panel.open { transform: translateX(0); }
-    .panel-header {
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(62,130,255,0.2);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-weight: 700;
-    }
-    .close-panel {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.1);
-      border: none;
-      color: white;
-      cursor: pointer;
-    }
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .chat-bubble {
-      max-width: 85%;
-      padding: 8px 12px;
-      border-radius: 16px;
-      background: #1a2538;
-      font-size: 12px;
-    }
-    .chat-mine {
-      align-self: flex-end;
-      background: rgba(62,130,255,0.5);
-      border-bottom-right-radius: 4px;
-    }
-    .chat-theirs {
-      align-self: flex-start;
-      border-bottom-left-radius: 4px;
-    }
-    .chat-author {
-      font-size: 10px;
-      color: #8b9dc3;
-      margin-bottom: 3px;
-    }
-    .chat-input-area {
-      display: flex;
-      gap: 8px;
-      padding: 10px;
-      border-top: 1px solid rgba(62,130,255,0.2);
-    }
-    .chat-input {
-      flex: 1;
-      background: #1a2538;
-      border: none;
-      border-radius: 20px;
-      padding: 8px 12px;
-      color: white;
-      font-size: 13px;
-    }
-    .chat-send {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #3e82ff, #00c4ff);
-      border: none;
-      cursor: pointer;
-    }
-    .participants-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px 0;
-    }
-    .participant-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-    }
-    .part-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #3e82ff, #00c4ff);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-    }
-    .part-name { flex: 1; font-size: 14px; }
-    .part-tag { font-size: 10px; background: rgba(62,130,255,0.2); padding: 2px 8px; border-radius: 12px; }
-    .waiting-section {
-      border-top: 1px solid rgba(255,255,255,0.1);
-      padding: 10px 12px;
-    }
-
-    /* Toast */
     .toast-message {
       position: fixed;
       bottom: 90px;
@@ -450,20 +249,19 @@
       to   { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
     .hidden { display: none; }
-
     @media (max-width: 480px) {
       .ctrl-icon { width: 42px; height: 42px; }
       .ctrl-icon svg { width: 18px; height: 18px; }
       .ctrl-label { font-size: 8px; }
       .sec-btn { padding: 4px 10px; font-size: 10px; }
-      .local-video-pip { width: 90px; height: 68px; bottom: 70px; }
-      .local-video-pip.expanded { width: 130px; height: 98px; }
+      .local-pip { width: 90px; height: 68px; bottom: 70px; }
+      .local-pip.expanded { width: 130px; height: 98px; }
       .no-video-avatar { width: 70px; height: 70px; font-size: 32px; }
     }
   </style>
 </head>
 <body>
-<div class="call-wrapper" id="callWrapper">
+<div class="call-container" id="callContainer">
   <div class="call-top-bar">
     <div class="call-top-bar-left">
       <div class="call-avatar" id="callAvatar">?</div>
@@ -483,17 +281,13 @@
   </div>
 
   <div class="video-area" id="videoArea">
-    <div id="personalView" style="height:100%; position:relative;">
-      <video id="remoteVideo" class="remote-video" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
-      <div id="noVideoPlaceholder" class="no-video-overlay">
-        <div class="no-video-avatar" id="remoteAvatarBig">?</div>
-        <div class="no-video-name" id="remoteNameBig">—</div>
-        <div class="no-video-sub" id="remoteSubBig">Соединение...</div>
-      </div>
+    <video id="remoteVideo" class="remote-video" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+    <div id="noVideoPlaceholder" class="no-video-overlay">
+      <div class="no-video-avatar" id="remoteAvatarBig">?</div>
+      <div class="no-video-name" id="remoteNameBig">—</div>
+      <div class="no-video-sub" id="remoteSubBig">Соединение...</div>
     </div>
-    <div id="groupView" class="group-grid" style="display: none;"></div>
-
-    <div class="local-video-pip" id="localPip">
+    <div class="local-pip" id="localPip">
       <video id="localVideo" autoplay playsinline muted></video>
       <button class="pip-toggle" onclick="togglePipSize()">⤢</button>
     </div>
@@ -519,27 +313,10 @@
       </button>
     </div>
     <div class="controls-row">
-      <button class="sec-btn" id="screenBtn" onclick="toggleScreenShare()"><svg viewBox="0 0 24 24" width="12" height="12"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span>Экран</span></button>
-      <button class="sec-btn" id="chatBtn" onclick="togglePanel('chat')"><svg viewBox="0 0 24 24" width="12" height="12"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Чат</span></button>
-      <button class="sec-btn" id="participantsBtn" onclick="togglePanel('participants')"><svg viewBox="0 0 24 24" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span>Участники</span></button>
-      <button class="sec-btn" id="handBtn" onclick="raiseHand()"><svg viewBox="0 0 24 24" width="12" height="12"><path d="M18 11V6a2 2 0 0 0-4 0v3M14 9V3a2 2 0 0 0-4 0v6M10 9.5V3a2 2 0 0 0-4 0v9"/><path d="M6 12v-2a2 2 0 0 0-2 0v6c0 3.31 2.69 6 6 6h2a6 6 0 0 0 6-6v-5a2 2 0 0 0-4 0"/></svg></span><span>Рука</span></button>
-      <button class="sec-btn" id="recordBtn" onclick="toggleRecord()"><svg viewBox="0 0 24 24" width="12" height="12"><circle cx="12" cy="12" r="8" fill="#ff4757"/></svg><span>Запись</span></button>
+      <button class="sec-btn" id="screenBtn" onclick="toggleScreenShare()"><svg viewBox="0 0 24 24" width="12" height="12"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Экран</button>
+      <button class="sec-btn" id="recordBtn" onclick="toggleRecord()"><svg viewBox="0 0 24 24" width="12" height="12"><circle cx="12" cy="12" r="8" fill="#ff4757"/></svg> Запись</button>
     </div>
   </div>
-</div>
-
-<!-- Chat panel -->
-<div id="chatPanel" class="side-panel">
-  <div class="panel-header"><span>💬 Чат</span><button class="close-panel" onclick="closePanel('chat')">✕</button></div>
-  <div class="chat-messages" id="chatMessages"></div>
-  <div class="chat-input-area"><input type="text" class="chat-input" id="chatInput" placeholder="Сообщение..."><button class="chat-send" onclick="sendChatMessage()">➤</button></div>
-</div>
-
-<!-- Participants panel -->
-<div id="participantsPanel" class="side-panel">
-  <div class="panel-header"><span>👥 Участники</span><button class="close-panel" onclick="closePanel('participants')">✕</button></div>
-  <div class="participants-list" id="participantsList"></div>
-  <div id="waitingSection" class="waiting-section" style="display: none;"><div style="font-weight: 700; margin-bottom: 6px;">Зал ожидания</div><div id="waitingList"></div></div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -562,13 +339,7 @@
   let mediaRecorder = null;
   let recordedChunks = [];
 
-  let isGroup = false;
-  let groupId = null;
-  let isHost = false;
-  let groupPeers = new Map();
-  let participants = [];
-  let waitingUsers = [];
-
+  // DOM elements
   const callNameEl = document.getElementById('callName');
   const callStatusEl = document.getElementById('callStatus');
   const callTimerEl = document.getElementById('callTimer');
@@ -578,8 +349,6 @@
   const remoteNameBig = document.getElementById('remoteNameBig');
   const remoteSubBig = document.getElementById('remoteSubBig');
   const noVideoPlaceholder = document.getElementById('noVideoPlaceholder');
-  const personalView = document.getElementById('personalView');
-  const groupView = document.getElementById('groupView');
   const callAvatar = document.getElementById('callAvatar');
 
   // ============================================================
@@ -595,21 +364,7 @@
     callData = JSON.parse(raw);
     localStorage.removeItem('callData');
     currentUser = { userId: callData.myUserId, username: callData.myUsername };
-
-    if (callData.type === 'personal') {
-      isGroup = false;
-      setCallMeta(callData.targetName, 'Соединение...');
-      document.getElementById('chatBtn').style.display = 'none';
-      document.getElementById('participantsBtn').style.display = 'none';
-      document.getElementById('handBtn').style.display = 'none';
-    } else {
-      isGroup = true;
-      groupId = callData.groupId;
-      isHost = callData.isHost || false;
-      setCallMeta(callData.groupName, 'Подключение...');
-      personalView.style.display = 'none';
-      groupView.style.display = 'grid';
-    }
+    setCallMeta(callData.targetName, 'Соединение...');
 
     socket = io({ transports: ['websocket', 'polling'] });
     socket.on('connect', () => {
@@ -633,59 +388,48 @@
   //  SOCKET LISTENERS
   // ============================================================
   function setupSocketListeners() {
-    if (!isGroup) {
-      if (callData.isIncoming) {
-        socket.emit('accept-call', { fromId: callData.targetId });
-        startPersonalCall(true);
-      } else {
-        startPersonalCall(false);
-      }
-      socket.on('offer', async (data) => await handleOffer(data));
-      socket.on('answer', async (data) => await handleAnswer(data));
-      socket.on('ice-candidate', async (data) => {
-        if (peerConnection && data.candidate) {
-          try { await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e) {}
-        }
-      });
-      socket.on('call-rejected', () => { showToast('Звонок отклонён'); setTimeout(() => window.close(), 1500); });
-      socket.on('call-ended', () => { showToast('Звонок завершён'); setTimeout(() => window.close(), 1500); });
+    if (callData.isIncoming) {
+      // Мы принимаем звонок
+      socket.emit('accept-call', { fromId: callData.targetId });
+      startPersonalCall(true);
     } else {
-      if (isHost) {
-        joinGroupCall();
-      } else {
-        socket.emit('join-group-request', { groupId });
-        callStatusEl.textContent = 'Ожидание допуска...';
-        remoteSubBig.textContent = 'Ожидание допуска от организатора';
-      }
-      socket.on('admitted-to-group', async ({ groupId: gid, hostId, participants: parts, chat }) => {
-        isHost = (hostId === currentUser.userId);
-        showToast('Вы вошли в конференцию');
-        participants = parts;
-        renderParticipants();
-        if (chat) chat.forEach(msg => appendChatMessage(msg, msg.userId === currentUser.userId));
-        if (!localStream) await joinGroupCall();
-        for (const p of participants) {
-          if (p.userId !== currentUser.userId) await createGroupOffer(p.userId);
-        }
-      });
-      socket.on('waiting-for-admission', () => { callStatusEl.textContent = 'Ждём разрешения...'; });
-      socket.on('rejected-from-group', () => { showToast('Вас не пустили в конференцию', true); setTimeout(() => window.close(), 2000); });
-      socket.on('waiting-list-update', ({ waiting }) => { if (isHost) renderWaitingList(waiting); });
-      socket.on('group-participants-update', ({ participants: p }) => { participants = p; renderParticipants(); });
-      socket.on('host-changed', ({ newHostId }) => {
-        if (newHostId === currentUser.userId) { isHost = true; showToast('Вы стали организатором'); renderParticipants(); }
-      });
-      socket.on('group-offer', async (data) => await handleGroupOffer(data));
-      socket.on('group-answer', async (data) => await handleGroupAnswer(data));
-      socket.on('group-ice', async (data) => await handleGroupIce(data));
-      socket.on('group-chat-message', (msg) => { appendChatMessage(msg, msg.userId === currentUser.userId); });
-      socket.on('hand-raised', ({ username }) => showToast(`✋ ${username} поднял(а) руку`));
-      socket.on('call-ended', () => { showToast('Конференция завершена'); setTimeout(() => window.close(), 2000); });
+      // Мы звоним
+      startPersonalCall(false);
     }
+
+    socket.on('call-accepted', () => {
+      // Ждем offer от отвечающего
+    });
+
+    socket.on('call-rejected', () => {
+      showToast('Звонок отклонён');
+      setTimeout(() => window.close(), 1500);
+    });
+
+    socket.on('call-ended', () => {
+      showToast('Звонок завершён');
+      setTimeout(() => window.close(), 1500);
+    });
+
+    socket.on('offer', async (data) => {
+      await handleOffer(data);
+    });
+
+    socket.on('answer', async (data) => {
+      await handleAnswer(data);
+    });
+
+    socket.on('ice-candidate', async (data) => {
+      if (peerConnection && data.candidate) {
+        try {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch(e) { console.error('ICE error', e); }
+      }
+    });
   }
 
   // ============================================================
-  //  МЕДИА И WEBRTC (ЛИЧНЫЙ)
+  //  МЕДИА И WEBRTC
   // ============================================================
   async function getLocalStream(videoEnabled = true) {
     const constraints = {
@@ -703,7 +447,51 @@
       peerConnection = new RTCPeerConnection({ iceServers });
       localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
       peerConnection.onicecandidate = e => {
-        if (e.candidate) socket.emit('ice-candidate', { targetId: callData.targetId, candidate: e.candidate });
+        if (e.candidate) {
+          socket.emit('ice-candidate', { targetId: callData.targetId, candidate: e.candidate });
+        }
+      };
+      peerConnection.ontrack = e => {
+        if (e.streams[0]) {
+          remoteVideo.srcObject = e.streams[0];
+          noVideoPlaceholder.style.display = 'none';
+        }
+      };
+      peerConnection.onconnectionstatechange = () => {
+        console.log('Connection state:', peerConnection.connectionState);
+        if (peerConnection.connectionState === 'connected') {
+          callStatusEl.textContent = 'В процессе';
+          remoteSubBig.textContent = 'В процессе';
+          startTimer();
+          startQualityMonitor();
+          applyBandwidth();
+        } else if (peerConnection.connectionState === 'failed') {
+          showToast('Соединение потеряно');
+          setTimeout(() => window.close(), 2000);
+        }
+      };
+      if (!isAnswering) {
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        socket.emit('offer', { targetId: callData.targetId, offer });
+        callStatusEl.textContent = 'Вызов...';
+        remoteSubBig.textContent = 'Вызов...';
+      }
+    } catch(err) {
+      console.error(err);
+      showToast('Не удалось получить доступ к медиа', true);
+      setTimeout(() => window.close(), 2000);
+    }
+  }
+
+  async function handleOffer(data) {
+    if (!peerConnection) {
+      peerConnection = new RTCPeerConnection({ iceServers: await fetchIceServers() });
+      if (localStream) localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+      peerConnection.onicecandidate = e => {
+        if (e.candidate) {
+          socket.emit('ice-candidate', { targetId: data.from, candidate: e.candidate });
+        }
       };
       peerConnection.ontrack = e => {
         if (e.streams[0]) {
@@ -713,45 +501,24 @@
       };
       peerConnection.onconnectionstatechange = () => {
         if (peerConnection.connectionState === 'connected') {
-          callStatusEl.textContent = 'В процессе';
-          remoteSubBig.textContent = 'В процессе';
           startTimer();
           startQualityMonitor();
           applyBandwidth();
         }
       };
-      if (!isAnswering) {
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        socket.emit('offer', { targetId: callData.targetId, offer });
-      }
-    } catch(err) {
-      showToast('Не удалось получить доступ к медиа', true);
-      setTimeout(() => window.close(), 2000);
     }
-  }
-
-  async function handleOffer({ offer, from }) {
-    if (!peerConnection) {
-      peerConnection = new RTCPeerConnection({ iceServers: await fetchIceServers() });
-      if (localStream) localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
-      peerConnection.onicecandidate = e => {
-        if (e.candidate) socket.emit('ice-candidate', { targetId: from, candidate: e.candidate });
-      };
-      peerConnection.ontrack = e => {
-        if (e.streams[0]) { remoteVideo.srcObject = e.streams[0]; noVideoPlaceholder.style.display = 'none'; }
-      };
-    }
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
-    socket.emit('answer', { targetId: from, answer });
-    startTimer();
-    startQualityMonitor();
+    socket.emit('answer', { targetId: data.from, answer });
+    callStatusEl.textContent = 'В процессе';
+    remoteSubBig.textContent = 'В процессе';
   }
 
-  async function handleAnswer({ answer }) {
-    if (peerConnection) await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+  async function handleAnswer(data) {
+    if (peerConnection) {
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+    }
   }
 
   async function fetchIceServers() {
@@ -773,80 +540,6 @@
         sender.setParameters(params);
       }
     }
-  }
-
-  // ============================================================
-  //  ГРУППОВОЙ ЗВОНОК (MESH)
-  // ============================================================
-  async function joinGroupCall() {
-    try {
-      localStream = await getLocalStream(true);
-      localVideo.srcObject = localStream;
-      callStatusEl.textContent = 'В конференции';
-      startTimer();
-    } catch(err) { showToast('Ошибка доступа к медиа', true); }
-  }
-
-  async function createGroupOffer(targetId) {
-    const pc = buildGroupPeer(targetId);
-    if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    socket.emit('group-offer', { groupId, targetId, offer });
-  }
-
-  function buildGroupPeer(userId) {
-    if (groupPeers.has(userId)) groupPeers.get(userId).close();
-    const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-    groupPeers.set(userId, pc);
-    pc.onicecandidate = e => {
-      if (e.candidate) socket.emit('group-ice', { groupId, targetId: userId, candidate: e.candidate });
-    };
-    pc.ontrack = e => {
-      if (e.streams[0]) renderGroupTile(userId, e.streams[0]);
-    };
-    return pc;
-  }
-
-  async function handleGroupOffer({ from, offer }) {
-    let pc = groupPeers.get(from);
-    if (!pc) pc = buildGroupPeer(from);
-    if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
-    await pc.setRemoteDescription(new RTCSessionDescription(offer));
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    socket.emit('group-answer', { groupId, targetId: from, answer });
-  }
-
-  async function handleGroupAnswer({ from, answer }) {
-    const pc = groupPeers.get(from);
-    if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
-  }
-
-  async function handleGroupIce({ from, candidate }) {
-    const pc = groupPeers.get(from);
-    if (pc && candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
-  }
-
-  function renderGroupTile(userId, stream) {
-    let tile = document.getElementById(`tile_${userId}`);
-    if (!tile) {
-      tile = document.createElement('div');
-      tile.className = 'participant-tile';
-      tile.id = `tile_${userId}`;
-      const video = document.createElement('video');
-      video.autoplay = true;
-      video.playsInline = true;
-      video.style.cssText = 'width:100%;height:100%;object-fit:cover;';
-      const label = document.createElement('div');
-      label.className = 'participant-label';
-      const part = participants.find(p => p.userId === userId);
-      label.innerHTML = `<span class="speaking-indicator" style="display:none;"></span>${part?.username || userId}`;
-      tile.appendChild(video);
-      tile.appendChild(label);
-      groupView.appendChild(tile);
-    }
-    tile.querySelector('video').srcObject = stream;
   }
 
   // ============================================================
@@ -887,7 +580,7 @@
     localStream.removeTrack(oldVideoTrack);
     localStream.addTrack(newVideoTrack);
     oldVideoTrack.stop();
-    const senders = peerConnection ? [peerConnection] : [...groupPeers.values()];
+    const senders = peerConnection ? [peerConnection] : [];
     for (const pc of senders) {
       const sender = pc.getSenders().find(s => s.track?.kind === 'video');
       if (sender) sender.replaceTrack(newVideoTrack);
@@ -900,7 +593,7 @@
       if (screenStream) screenStream.getTracks().forEach(t => t.stop());
       screenStream = null;
       const cameraTrack = localStream.getVideoTracks()[0];
-      const senders = peerConnection ? [peerConnection] : [...groupPeers.values()];
+      const senders = peerConnection ? [peerConnection] : [];
       for (const pc of senders) {
         const sender = pc.getSenders().find(s => s.track?.kind === 'video');
         if (sender) sender.replaceTrack(cameraTrack);
@@ -912,23 +605,20 @@
       try {
         screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
         const screenTrack = screenStream.getVideoTracks()[0];
-        const senders = peerConnection ? [peerConnection] : [...groupPeers.values()];
-        for (const pc of senders) {
-          const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+        const oldVideoTrack = localStream.getVideoTracks()[0];
+        localStream.removeTrack(oldVideoTrack);
+        localStream.addTrack(screenTrack);
+        if (peerConnection) {
+          const sender = peerConnection.getSenders().find(s => s.track?.kind === 'video');
           if (sender) sender.replaceTrack(screenTrack);
         }
+        localVideo.srcObject = localStream;
         isScreenSharing = true;
         document.getElementById('screenBtn').classList.add('active');
         showToast('Демонстрация экрана начата');
         screenTrack.onended = () => toggleScreenShare();
       } catch(e) { showToast('Демонстрация экрана отменена'); }
     }
-  }
-
-  function raiseHand() {
-    if (!isGroup) return;
-    socket.emit('raise-hand', { groupId });
-    showToast('✋ Вы подняли руку');
   }
 
   function toggleRecord() {
@@ -961,20 +651,14 @@
     if (peerConnection) peerConnection.close();
     if (localStream) localStream.getTracks().forEach(t => t.stop());
     if (screenStream) screenStream.getTracks().forEach(t => t.stop());
-    groupPeers.forEach(pc => pc.close());
     if (callTimerInterval) clearInterval(callTimerInterval);
     if (qualityInterval) clearInterval(qualityInterval);
-    if (isGroup) {
-      if (isHost) socket.emit('end-group-call', { groupId });
-      else socket.emit('leave-group', { groupId });
-    } else {
-      socket.emit('end-call', { targetId: callData.targetId });
-    }
+    socket.emit('end-call', { targetId: callData.targetId });
     window.close();
   }
 
   // ============================================================
-  //  ТАЙМЕР, КАЧЕСТВО, ПАНЕЛИ
+  //  ТАЙМЕР, КАЧЕСТВО
   // ============================================================
   function startTimer() {
     if (callTimerInterval) clearInterval(callTimerInterval);
@@ -1002,67 +686,6 @@
     }, 3000);
   }
 
-  function togglePanel(name) {
-    const panelId = name === 'chat' ? 'chatPanel' : 'participantsPanel';
-    const panel = document.getElementById(panelId);
-    if (!panel) return;
-    const isOpen = panel.classList.contains('open');
-    document.querySelectorAll('.side-panel').forEach(p => p.classList.remove('open'));
-    if (!isOpen) panel.classList.add('open');
-  }
-
-  function closePanel(name) {
-    document.getElementById(name === 'chat' ? 'chatPanel' : 'participantsPanel').classList.remove('open');
-  }
-
-  function sendChatMessage() {
-    const input = document.getElementById('chatInput');
-    const msg = input.value.trim();
-    if (!msg || !isGroup) return;
-    socket.emit('group-chat-message', { groupId, message: msg });
-    input.value = '';
-  }
-
-  function appendChatMessage(msg, isMine) {
-    const container = document.getElementById('chatMessages');
-    const div = document.createElement('div');
-    div.className = `chat-bubble ${isMine ? 'chat-mine' : 'chat-theirs'}`;
-    if (!isMine) div.innerHTML = `<div class="chat-author">${escapeHtml(msg.username)}</div>${escapeHtml(msg.message)}`;
-    else div.innerHTML = escapeHtml(msg.message);
-    container.appendChild(div);
-    container.scrollTop = container.scrollHeight;
-  }
-
-  function renderParticipants() {
-    const container = document.getElementById('participantsList');
-    container.innerHTML = participants.map(p => `
-      <div class="participant-row">
-        <div class="part-avatar">${p.username[0].toUpperCase()}</div>
-        <div class="part-name">${escapeHtml(p.username)}</div>
-        ${p.userId === currentUser.userId ? '<span class="part-tag">Вы</span>' : ''}
-        ${isHost && p.userId === callData.hostId ? '<span class="part-tag">Организатор</span>' : ''}
-      </div>
-    `).join('');
-  }
-
-  function renderWaitingList(waiting) {
-    const sec = document.getElementById('waitingSection');
-    const list = document.getElementById('waitingList');
-    if (!waiting.length) { sec.style.display = 'none'; return; }
-    sec.style.display = 'block';
-    list.innerHTML = waiting.map(w => `
-      <div class="participant-row" style="padding: 6px 0;">
-        <div class="part-avatar" style="width:32px;height:32px;">${w.username[0].toUpperCase()}</div>
-        <div class="part-name" style="font-size:13px;">${escapeHtml(w.username)}</div>
-        <button class="sec-btn" style="background: #2ed573;" onclick="admitUser('${w.userId}')">Впустить</button>
-        <button class="sec-btn" style="background: #ff4757;" onclick="rejectUser('${w.userId}')">Отказать</button>
-      </div>
-    `).join('');
-  }
-
-  window.admitUser = (userId) => socket.emit('admit-participant', { groupId, userId });
-  window.rejectUser = (userId) => socket.emit('reject-participant', { groupId, userId });
-
   function togglePipSize() {
     document.getElementById('localPip').classList.toggle('expanded');
   }
@@ -1076,10 +699,7 @@
     setTimeout(() => toast.remove(), 3000);
   }
 
-  function escapeHtml(str) {
-    return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
-  }
-
+  // Перетаскивание PiP
   (function() {
     const pip = document.getElementById('localPip');
     let drag = false, ox, oy;
@@ -1103,6 +723,7 @@
     document.addEventListener('mouseup', () => { drag = false; pip.style.transition = ''; });
   })();
 
+  // Горячие клавиши
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return;
     if (e.key === 'm' || e.key === 'M') toggleMute();
