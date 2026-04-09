@@ -14,7 +14,7 @@ const io = socketIo(server, {
 
 app.use(cors());
 app.use(express.json());
-// Обслуживаем статические файлы из папки public2 (мобильная версия)
+// Обслуживаем статические файлы из папки public2 (Android версия)
 app.use(express.static(path.join(__dirname, 'public2')));
 
 // ── Хранилище ──────────────────────────────────────────────
@@ -141,7 +141,7 @@ io.on('connection', (socket) => {
     broadcastUserList();
   });
 
-  // ─── WebRTC сигналинг (личный) ──────────────────────────────
+  // ─── WebRTC СИГНАЛИНГ (личный) ──────────────────────────────
   socket.on('offer', ({ targetId, offer }) => {
     const sid = userSockets.get(targetId);
     if (sid) io.to(sid).emit('offer', { from: socket.userId, offer });
@@ -265,7 +265,7 @@ io.on('connection', (socket) => {
     socket.emit('group-list', list);
   });
 
-  // ─── WebRTC сигналинг (групповой) ───────────────────────────
+  // ─── WebRTC СИГНАЛИНГ (групповой) ───────────────────────────
   socket.on('group-offer', ({ groupId, targetId, offer }) => {
     const sid = userSockets.get(targetId);
     if (sid) io.to(sid).emit('group-offer', { from: socket.userId, fromName: socket.username, offer });
@@ -359,7 +359,7 @@ function broadcastGroups() {
   io.emit('group-list', list);
 }
 
-const PORT = process.env.PORT2 || 3001;
+const PORT = process.env.PORT_ANDROID || 3001;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`📱 CraneCall Mobile server running on port ${PORT}`);
+  console.log(`🤖 CraneCall Android server running on port ${PORT}`);
 });
