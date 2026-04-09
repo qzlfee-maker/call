@@ -133,6 +133,7 @@
       align-items: center;
       gap: 10px;
       font-weight: 800;
+      font-size: 18px;
     }
     .logo-icon {
       width: 34px;
@@ -631,7 +632,7 @@
               <div class="user-status">${u.status === 'busy' ? '🔴 В звонке' : '🟢 Онлайн'}</div>
             </div>
             <div class="call-actions">
-              <button class="call-action-btn" onclick="startCall('${u.userId}','${escapeHtml(u.username)}','video')">📹</button>
+              <button class="call-action-btn" onclick="startCall('${u.userId}','${escapeHtml(u.username)}')">📹</button>
             </div>
           </div>
         `).join('');
@@ -733,7 +734,7 @@
   }
 
   // ========== START CALL (from contacts) ==========
-  window.startCall = (targetId, targetName, callType) => {
+  window.startCall = (targetId, targetName) => {
     if (callState !== 'idle') { showToast('Уже есть активный звонок', true); return; }
     callState = 'calling';
     localStorage.setItem('callData', JSON.stringify({
@@ -742,11 +743,11 @@
       myUsername: currentUser.username,
       targetId,
       targetName,
-      callType: callType || 'video',
+      callType: 'video',
       isIncoming: false,
       iceServers
     }));
-    socket.emit('call-user', { targetId, callType });
+    socket.emit('call-user', { targetId, callType: 'video' });
     window.open('/call', '_blank', 'width=1000,height=700');
     setTimeout(() => { if (callState === 'calling') callState = 'idle'; }, 5000);
   };
