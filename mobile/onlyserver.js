@@ -1,757 +1,207 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>CraneCall — Android звонок</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
+const cors = require('cors');
+const path = require('path');
 
-    body {
-      background: #000;
-      font-family: 'Manrope', system-ui, sans-serif;
-      color: #fff;
-      overflow: hidden;
-      height: 100vh;
-      position: fixed;
-      width: 100%;
-    }
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: { origin: '*', methods: ['GET', 'POST'] },
+  pingTimeout: 60000,
+  pingInterval: 25000
+});
 
-    /* ========== MAIN WRAPPER ========== */
-    .call-wrapper {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      position: relative;
-      background: #000;
-    }
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-    /* ========== TOP BAR ========== */
-    .call-top-bar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 20;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
-      pointer-events: none;
-    }
-    .call-top-bar-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      pointer-events: auto;
-    }
-    .call-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #3e82ff, #00c4ff);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      font-weight: 700;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
-    }
-    .call-info h2 {
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.2;
-    }
-    .call-info p {
-      font-size: 11px;
-      color: rgba(255,255,255,0.7);
-      margin-top: 2px;
-    }
-    .call-timer {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      font-weight: 500;
-      background: rgba(0,0,0,0.5);
-      padding: 4px 8px;
-      border-radius: 20px;
-      letter-spacing: 0.5px;
-      pointer-events: auto;
-    }
-    .quality-indicator {
-      display: flex;
-      align-items: flex-end;
-      gap: 2px;
-      margin-right: 8px;
-    }
-    .qual-bar {
-      width: 3px;
-      border-radius: 2px;
-      background: #2ed573;
-      transition: height 0.3s, background 0.3s;
-    }
+// ========== Хранилище (только личные звонки) ==========
+const users       = new Map(); // socketId → { username, userId, status }
+const userSockets = new Map(); // userId → socketId
 
-    /* ========== VIDEO AREA ========== */
-    .video-area {
-      flex: 1;
-      position: relative;
-      background: #000;
-      overflow: hidden;
-    }
-    .remote-video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .no-video-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: #0f1624;
-      backdrop-filter: blur(2px);
-    }
-    .no-video-avatar {
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #3e82ff, #00c4ff);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 42px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      box-shadow: 0 0 0 6px rgba(62,130,255,0.2);
-      animation: gentlePulse 2s infinite;
-    }
-    @keyframes gentlePulse {
-      0%,100% { box-shadow: 0 0 0 6px rgba(62,130,255,0.15); }
-      50%      { box-shadow: 0 0 0 12px rgba(62,130,255,0.25); }
-    }
-    .no-video-name {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-    .no-video-sub {
-      font-size: 12px;
-      color: #8b9dc3;
-    }
-
-    /* Local video (draggable) */
-    .local-video-pip {
-      position: absolute;
-      bottom: 80px;
-      right: 12px;
-      width: 110px;
-      height: 80px;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 2px solid rgba(62,130,255,0.8);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      cursor: grab;
-      z-index: 15;
-      background: #000;
-    }
-    .local-video-pip.expanded {
-      width: 160px;
-      height: 120px;
-    }
-    .local-video-pip video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .pip-toggle {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      width: 20px;
-      height: 20px;
-      border-radius: 6px;
-      background: rgba(0,0,0,0.6);
-      border: none;
-      color: #fff;
-      font-size: 10px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2;
-    }
-
-    /* Controls (bottom bar) */
-    .call-controls {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 10px 12px max(10px, env(safe-area-inset-bottom));
-      background: linear-gradient(to top, rgba(0,0,0,0.95) 70%, transparent);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      z-index: 20;
-      pointer-events: none;
-    }
-    .controls-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      pointer-events: auto;
-    }
-    .ctrl-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      min-width: 52px;
-    }
-    .ctrl-btn:active { transform: scale(0.94); }
-    .ctrl-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.15);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .ctrl-icon svg {
-      width: 20px;
-      height: 20px;
-      stroke: white;
-      stroke-width: 2;
-      fill: none;
-    }
-    .ctrl-label {
-      font-size: 9px;
-      font-weight: 600;
-      color: rgba(255,255,255,0.8);
-    }
-    .ctrl-btn.active .ctrl-icon { background: rgba(62,130,255,0.6); }
-    .ctrl-btn.off .ctrl-icon { background: rgba(255,71,87,0.4); }
-    .ctrl-btn.off .ctrl-label { color: #ff4757; }
-    .ctrl-btn.end-call .ctrl-icon { background: #ff4757; box-shadow: 0 2px 8px rgba(255,71,87,0.4); }
-
-    /* Secondary buttons */
-    .sec-btn {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      background: rgba(255,255,255,0.1);
-      border: none;
-      border-radius: 30px;
-      padding: 5px 12px;
-      color: white;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .sec-btn.active { background: rgba(62,130,255,0.4); }
-
-    /* Toast */
-    .toast-message {
-      position: fixed;
-      bottom: 90px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.85);
-      backdrop-filter: blur(12px);
-      border-radius: 30px;
-      padding: 6px 16px;
-      font-size: 12px;
-      font-weight: 600;
-      z-index: 200;
-      white-space: nowrap;
-      animation: fadeUp 0.2s ease;
-    }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateX(-50%) translateY(10px); }
-      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-    }
-    .hidden { display: none; }
-
-    @media (max-width: 480px) {
-      .ctrl-icon { width: 42px; height: 42px; }
-      .ctrl-icon svg { width: 18px; height: 18px; }
-      .ctrl-label { font-size: 8px; }
-      .sec-btn { padding: 4px 10px; font-size: 10px; }
-      .local-video-pip { width: 90px; height: 68px; bottom: 70px; }
-      .local-video-pip.expanded { width: 130px; height: 98px; }
-      .no-video-avatar { width: 70px; height: 70px; font-size: 32px; }
-    }
-  </style>
-</head>
-<body>
-<div class="call-wrapper" id="callWrapper">
-  <div class="call-top-bar">
-    <div class="call-top-bar-left">
-      <div class="call-avatar" id="callAvatar">?</div>
-      <div class="call-info">
-        <h2 id="callName">Соединение...</h2>
-        <p id="callStatus">Устанавливается</p>
-      </div>
-    </div>
-    <div style="display: flex; align-items: center;">
-      <div class="quality-indicator" id="qualityIndicator">
-        <div class="qual-bar" style="height: 4px;"></div>
-        <div class="qual-bar" style="height: 7px;"></div>
-        <div class="qual-bar" style="height: 10px;"></div>
-      </div>
-      <div class="call-timer" id="callTimer">00:00</div>
-    </div>
-  </div>
-
-  <div class="video-area" id="videoArea">
-    <div id="personalView" style="height:100%; position:relative;">
-      <video id="remoteVideo" class="remote-video" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
-      <div id="noVideoPlaceholder" class="no-video-overlay">
-        <div class="no-video-avatar" id="remoteAvatarBig">?</div>
-        <div class="no-video-name" id="remoteNameBig">—</div>
-        <div class="no-video-sub" id="remoteSubBig">Соединение...</div>
-      </div>
-    </div>
-    <div id="groupView" class="group-grid" style="display: none;"></div>
-
-    <div class="local-video-pip" id="localPip">
-      <video id="localVideo" autoplay playsinline muted></video>
-      <button class="pip-toggle" onclick="togglePipSize()">⤢</button>
-    </div>
-  </div>
-
-  <div class="call-controls">
-    <div class="controls-row">
-      <button class="ctrl-btn" id="micBtn" onclick="toggleMute()">
-        <div class="ctrl-icon"><svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg></div>
-        <span class="ctrl-label" id="micLabel">Микрофон</span>
-      </button>
-      <button class="ctrl-btn" id="camBtn" onclick="toggleVideo()">
-        <div class="ctrl-icon"><svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
-        <span class="ctrl-label" id="camLabel">Камера</span>
-      </button>
-      <button class="ctrl-btn end-call" onclick="endCall()">
-        <div class="ctrl-icon"><svg viewBox="0 0 24 24" stroke-width="2.5"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 1.72 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91M23 1 1 23"/></svg></div>
-        <span class="ctrl-label">Завершить</span>
-      </button>
-      <button class="ctrl-btn" id="switchCamBtn" onclick="switchCamera()">
-        <div class="ctrl-icon"><svg viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg></div>
-        <span class="ctrl-label">Камера ↔</span>
-      </button>
-    </div>
-    <div class="controls-row">
-      <button class="sec-btn" id="screenBtn" onclick="toggleScreenShare()"><svg viewBox="0 0 24 24" width="12" height="12"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span>Экран</span></button>
-    </div>
-  </div>
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
-<script>
-  // ============================================================
-  //  ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
-  // ============================================================
-  let socket = null;
-  let currentUser = null;
-  let callData = null;
-  let peerConnection = null;
-  let localStream = null;
-  let screenStream = null;
-  let isScreenSharing = false;
-  let muted = false, videoOff = false, usingFront = true;
-  let callTimerInterval = null;
-  let callStartTime = 0;
-  let qualityInterval = null;
-  let isRecording = false;
-  let mediaRecorder = null;
-  let recordedChunks = [];
-
-  // DOM элементы
-  const callNameEl = document.getElementById('callName');
-  const callStatusEl = document.getElementById('callStatus');
-  const callTimerEl = document.getElementById('callTimer');
-  const remoteVideo = document.getElementById('remoteVideo');
-  const localVideo = document.getElementById('localVideo');
-  const remoteAvatarBig = document.getElementById('remoteAvatarBig');
-  const remoteNameBig = document.getElementById('remoteNameBig');
-  const remoteSubBig = document.getElementById('remoteSubBig');
-  const noVideoPlaceholder = document.getElementById('noVideoPlaceholder');
-  const personalView = document.getElementById('personalView');
-  const callAvatar = document.getElementById('callAvatar');
-
-  // ============================================================
-  //  ИНИЦИАЛИЗАЦИЯ
-  // ============================================================
-  function init() {
-    const raw = localStorage.getItem('callData');
-    if (!raw) {
-      alert('Нет данных о звонке. Вернитесь в главное окно.');
-      window.close();
-      return;
-    }
-    callData = JSON.parse(raw);
-    localStorage.removeItem('callData');
-    currentUser = { userId: callData.myUserId, username: callData.myUsername };
-    setCallMeta(callData.targetName, 'Соединение...');
-
-    socket = io({ transports: ['websocket', 'polling'] });
-    socket.on('connect', () => {
-      console.log('socket connected');
-      socket.emit('register', { username: currentUser.username, userId: currentUser.userId });
-      setupSocketListeners();
-    });
+// Бесплатные STUN/TURN серверы
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' },
+  {
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
   }
+];
 
-  function setCallMeta(name, status) {
-    callNameEl.textContent = name;
-    callStatusEl.textContent = status;
-    callAvatar.textContent = name[0]?.toUpperCase() || '?';
-    remoteAvatarBig.textContent = name[0]?.toUpperCase() || '?';
-    remoteNameBig.textContent = name;
-    remoteSubBig.textContent = status;
-    document.title = `Звонок — ${name}`;
+// ========== REST API ==========
+app.get('/api/ice-config', (req, res) => {
+  res.json({ iceServers: ICE_SERVERS });
+});
+
+app.post('/api/register', (req, res) => {
+  const { username, userId } = req.body;
+  if (!username || !userId) {
+    return res.status(400).json({ error: 'Username and userId required' });
   }
+  res.json({ success: true });
+});
 
-  // ============================================================
-  //  SOCKET LISTENERS
-  // ============================================================
-  function setupSocketListeners() {
-    if (callData.isIncoming) {
-      // Мы принимаем звонок
-      socket.emit('accept-call', { fromId: callData.targetId });
-      startPersonalCall(true);
-    } else {
-      // Мы звоним
-      startPersonalCall(false);
+app.get('/api/users', (req, res) => {
+  const list = Array.from(userSockets.entries()).map(([userId, socketId]) => ({
+    userId,
+    username: users.get(socketId)?.username || 'Unknown',
+    status: users.get(socketId)?.status || 'online'
+  }));
+  res.json(list);
+});
+
+app.get('/call', (req, res) => {
+  res.sendFile(path.join(__dirname, 'call.html'));
+});
+
+// ========== Socket.IO ==========
+io.on('connection', (socket) => {
+  console.log('[socket] connect', socket.id);
+
+  // Регистрация
+  socket.on('register', ({ username, userId }) => {
+    const oldSocketId = userSockets.get(userId);
+    if (oldSocketId && oldSocketId !== socket.id) {
+      users.delete(oldSocketId);
     }
-
-    socket.on('call-accepted', () => {
-      // Ждем offer от отвечающего
-    });
-
-    socket.on('call-rejected', () => {
-      showToast('Звонок отклонён');
-      setTimeout(() => window.close(), 1500);
-    });
-
-    socket.on('call-ended', () => {
-      showToast('Звонок завершён');
-      setTimeout(() => window.close(), 1500);
-    });
-
-    socket.on('offer', async (data) => {
-      await handleOffer(data);
-    });
-
-    socket.on('answer', async (data) => {
-      await handleAnswer(data);
-    });
-
-    socket.on('ice-candidate', async (data) => {
-      if (peerConnection && data.candidate) {
-        try {
-          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-        } catch(e) { console.error('ICE error', e); }
-      }
-    });
-  }
-
-  // ============================================================
-  //  МЕДИА И WEBRTC
-  // ============================================================
-  async function getLocalStream(videoEnabled = true) {
-    const constraints = {
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      video: videoEnabled ? { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: 30 } : false
-    };
-    return await navigator.mediaDevices.getUserMedia(constraints);
-  }
-
-  async function startPersonalCall(isAnswering) {
-    try {
-      localStream = await getLocalStream(callData.callType === 'video');
-      localVideo.srcObject = localStream;
-      const iceServers = await fetchIceServers();
-      peerConnection = new RTCPeerConnection({ iceServers });
-      localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
-      peerConnection.onicecandidate = e => {
-        if (e.candidate) {
-          socket.emit('ice-candidate', { targetId: callData.targetId, candidate: e.candidate });
-        }
-      };
-      peerConnection.ontrack = e => {
-        if (e.streams[0]) {
-          remoteVideo.srcObject = e.streams[0];
-          noVideoPlaceholder.style.display = 'none';
-        }
-      };
-      peerConnection.onconnectionstatechange = () => {
-        console.log('Connection state:', peerConnection.connectionState);
-        if (peerConnection.connectionState === 'connected') {
-          callStatusEl.textContent = 'В процессе';
-          remoteSubBig.textContent = 'В процессе';
-          startTimer();
-          startQualityMonitor();
-          applyBandwidth();
-        } else if (peerConnection.connectionState === 'failed') {
-          showToast('Соединение потеряно');
-          setTimeout(() => window.close(), 2000);
-        }
-      };
-      if (!isAnswering) {
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        socket.emit('offer', { targetId: callData.targetId, offer });
-        callStatusEl.textContent = 'Вызов...';
-        remoteSubBig.textContent = 'Вызов...';
-      }
-    } catch(err) {
-      console.error(err);
-      showToast('Не удалось получить доступ к медиа', true);
-      setTimeout(() => window.close(), 2000);
-    }
-  }
-
-  async function handleOffer(data) {
-    if (!peerConnection) {
-      peerConnection = new RTCPeerConnection({ iceServers: await fetchIceServers() });
-      if (localStream) localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
-      peerConnection.onicecandidate = e => {
-        if (e.candidate) {
-          socket.emit('ice-candidate', { targetId: data.from, candidate: e.candidate });
-        }
-      };
-      peerConnection.ontrack = e => {
-        if (e.streams[0]) {
-          remoteVideo.srcObject = e.streams[0];
-          noVideoPlaceholder.style.display = 'none';
-        }
-      };
-      peerConnection.onconnectionstatechange = () => {
-        if (peerConnection.connectionState === 'connected') {
-          startTimer();
-          startQualityMonitor();
-          applyBandwidth();
-        }
-      };
-    }
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answer);
-    socket.emit('answer', { targetId: data.from, answer });
-    callStatusEl.textContent = 'В процессе';
-    remoteSubBig.textContent = 'В процессе';
-  }
-
-  async function handleAnswer(data) {
-    if (peerConnection) {
-      await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-    }
-  }
-
-  async function fetchIceServers() {
-    try {
-      const res = await fetch('/api/ice-config');
-      const data = await res.json();
-      return data.iceServers;
-    } catch(e) { return [{ urls: 'stun:stun.l.google.com:19302' }]; }
-  }
-
-  function applyBandwidth() {
-    if (!peerConnection) return;
-    const senders = peerConnection.getSenders();
-    for (const sender of senders) {
-      if (sender.track?.kind === 'video') {
-        const params = sender.getParameters();
-        if (!params.encodings) params.encodings = [{}];
-        params.encodings[0].maxBitrate = 1500000;
-        sender.setParameters(params);
-      }
-    }
-  }
-
-  // ============================================================
-  //  УПРАВЛЕНИЕ (КНОПКИ)
-  // ============================================================
-  function toggleMute() {
-    if (!localStream) return;
-    muted = !muted;
-    localStream.getAudioTracks().forEach(t => t.enabled = !muted);
-    const btn = document.getElementById('micBtn');
-    btn.classList.toggle('off', muted);
-    document.getElementById('micLabel').innerText = muted ? 'Микрофон выкл' : 'Микрофон';
-  }
-
-  function toggleVideo() {
-    if (!localStream) return;
-    videoOff = !videoOff;
-    localStream.getVideoTracks().forEach(t => t.enabled = !videoOff);
-    const btn = document.getElementById('camBtn');
-    btn.classList.toggle('off', videoOff);
-    document.getElementById('camLabel').innerText = videoOff ? 'Камера выкл' : 'Камера';
-    if (videoOff) {
-      noVideoPlaceholder.style.display = 'flex';
-    } else {
-      noVideoPlaceholder.style.display = 'none';
-    }
-  }
-
-  async function switchCamera() {
-    if (!localStream) return;
-    usingFront = !usingFront;
-    const newStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: usingFront ? 'user' : 'environment' },
-      audio: true
-    });
-    const newVideoTrack = newStream.getVideoTracks()[0];
-    const oldVideoTrack = localStream.getVideoTracks()[0];
-    localStream.removeTrack(oldVideoTrack);
-    localStream.addTrack(newVideoTrack);
-    oldVideoTrack.stop();
-    const senders = peerConnection ? [peerConnection] : [];
-    for (const pc of senders) {
-      const sender = pc.getSenders().find(s => s.track?.kind === 'video');
-      if (sender) sender.replaceTrack(newVideoTrack);
-    }
-    localVideo.srcObject = localStream;
-  }
-
-  async function toggleScreenShare() {
-    if (isScreenSharing) {
-      if (screenStream) screenStream.getTracks().forEach(t => t.stop());
-      screenStream = null;
-      const cameraTrack = localStream.getVideoTracks()[0];
-      const senders = peerConnection ? [peerConnection] : [];
-      for (const pc of senders) {
-        const sender = pc.getSenders().find(s => s.track?.kind === 'video');
-        if (sender) sender.replaceTrack(cameraTrack);
-      }
-      isScreenSharing = false;
-      document.getElementById('screenBtn').classList.remove('active');
-      showToast('Демонстрация экрана завершена');
-    } else {
-      try {
-        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-        const screenTrack = screenStream.getVideoTracks()[0];
-        const senders = peerConnection ? [peerConnection] : [];
-        for (const pc of senders) {
-          const sender = pc.getSenders().find(s => s.track?.kind === 'video');
-          if (sender) sender.replaceTrack(screenTrack);
-        }
-        isScreenSharing = true;
-        document.getElementById('screenBtn').classList.add('active');
-        showToast('Демонстрация экрана начата');
-        screenTrack.onended = () => toggleScreenShare();
-      } catch(e) { showToast('Демонстрация экрана отменена'); }
-    }
-  }
-
-  function endCall() {
-    if (peerConnection) peerConnection.close();
-    if (localStream) localStream.getTracks().forEach(t => t.stop());
-    if (screenStream) screenStream.getTracks().forEach(t => t.stop());
-    if (callTimerInterval) clearInterval(callTimerInterval);
-    if (qualityInterval) clearInterval(qualityInterval);
-    socket.emit('end-call', { targetId: callData.targetId });
-    window.close();
-  }
-
-  // ============================================================
-  //  ТАЙМЕР, КАЧЕСТВО
-  // ============================================================
-  function startTimer() {
-    if (callTimerInterval) clearInterval(callTimerInterval);
-    callStartTime = Date.now();
-    callTimerInterval = setInterval(() => {
-      const sec = Math.floor((Date.now() - callStartTime) / 1000);
-      callTimerEl.textContent = `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
-    }, 1000);
-  }
-
-  function startQualityMonitor() {
-    if (qualityInterval) clearInterval(qualityInterval);
-    qualityInterval = setInterval(async () => {
-      const pc = peerConnection;
-      if (!pc) return;
-      try {
-        const stats = await pc.getStats();
-        let rtt = 0;
-        stats.forEach(r => { if (r.type === 'remote-inbound-rtp' && r.roundTripTime) rtt = r.roundTripTime * 1000; });
-        const bars = document.querySelectorAll('.qual-bar');
-        if (rtt < 100) { bars.forEach((b,i) => { b.style.height = [4,7,10][i]+'px'; b.style.background = '#2ed573'; }); }
-        else if (rtt < 250) { bars.forEach((b,i) => { b.style.height = [4,7,4][i]+'px'; b.style.background = '#ffa502'; }); }
-        else { bars.forEach((b,i) => { b.style.height = [4,4,4][i]+'px'; b.style.background = '#ff4757'; }); }
-      } catch(e) {}
-    }, 3000);
-  }
-
-  function togglePipSize() {
-    document.getElementById('localPip').classList.toggle('expanded');
-  }
-
-  function showToast(msg, isError = false) {
-    const toast = document.createElement('div');
-    toast.className = 'toast-message';
-    toast.style.background = isError ? 'rgba(255,71,87,0.9)' : 'rgba(0,0,0,0.85)';
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-  }
-
-  function escapeHtml(str) {
-    return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
-  }
-
-  // Перетаскивание PiP
-  (function() {
-    const pip = document.getElementById('localPip');
-    let drag = false, ox, oy;
-    pip.addEventListener('mousedown', e => {
-      if (e.target.classList.contains('pip-toggle')) return;
-      drag = true;
-      ox = e.clientX - pip.offsetLeft;
-      oy = e.clientY - pip.offsetTop;
-      pip.style.transition = 'none';
-    });
-    document.addEventListener('mousemove', e => {
-      if (!drag) return;
-      let x = e.clientX - ox, y = e.clientY - oy;
-      x = Math.min(Math.max(x, 0), window.innerWidth - pip.offsetWidth);
-      y = Math.min(Math.max(y, 0), window.innerHeight - pip.offsetHeight);
-      pip.style.left = x + 'px';
-      pip.style.top = y + 'px';
-      pip.style.right = 'auto';
-      pip.style.bottom = 'auto';
-    });
-    document.addEventListener('mouseup', () => { drag = false; pip.style.transition = ''; });
-  })();
-
-  document.addEventListener('keydown', e => {
-    if (e.target.tagName === 'INPUT') return;
-    if (e.key === 'm' || e.key === 'M') toggleMute();
-    if (e.key === 'v' || e.key === 'V') toggleVideo();
-    if (e.key === 'End') endCall();
+    users.set(socket.id, { username, userId, status: 'online' });
+    userSockets.set(userId, socket.id);
+    socket.userId = userId;
+    socket.username = username;
+    broadcastUserList();
+    console.log(`[register] ${username} (${userId})`);
   });
 
-  init();
-</script>
-</body>
-</html>
+  // Статус
+  socket.on('set-status', ({ status }) => {
+    const u = users.get(socket.id);
+    if (u) {
+      u.status = status;
+      broadcastUserList();
+    }
+  });
+
+  // Исходящий звонок
+  socket.on('call-user', ({ targetId, callType }) => {
+    const targetSocketId = userSockets.get(targetId);
+    if (targetSocketId && io.sockets.sockets.get(targetSocketId)) {
+      io.to(targetSocketId).emit('incoming-call', {
+        from: socket.userId,
+        fromName: socket.username,
+        callType
+      });
+      const u = users.get(socket.id);
+      if (u) {
+        u.status = 'busy';
+        broadcastUserList();
+      }
+    } else {
+      socket.emit('call-error', { message: 'User is offline' });
+    }
+  });
+
+  // Принять звонок
+  socket.on('accept-call', ({ fromId }) => {
+    const callerSocketId = userSockets.get(fromId);
+    if (callerSocketId) {
+      io.to(callerSocketId).emit('call-accepted', {
+        targetId: socket.userId,
+        targetName: socket.username
+      });
+      const u = users.get(socket.id);
+      if (u) {
+        u.status = 'busy';
+        broadcastUserList();
+      }
+    }
+  });
+
+  // Отклонить звонок
+  socket.on('reject-call', ({ fromId }) => {
+    const callerSocketId = userSockets.get(fromId);
+    if (callerSocketId) {
+      io.to(callerSocketId).emit('call-rejected');
+    }
+    const u = users.get(socket.id);
+    if (u) {
+      u.status = 'online';
+      broadcastUserList();
+    }
+  });
+
+  // Завершить звонок
+  socket.on('end-call', ({ targetId }) => {
+    const targetSocketId = userSockets.get(targetId);
+    if (targetSocketId) {
+      io.to(targetSocketId).emit('call-ended');
+    }
+    [socket.userId, targetId].forEach(uid => {
+      const sid = userSockets.get(uid);
+      if (sid) {
+        const u = users.get(sid);
+        if (u) u.status = 'online';
+      }
+    });
+    broadcastUserList();
+  });
+
+  // WebRTC сигналинг
+  socket.on('offer', ({ targetId, offer }) => {
+    const sid = userSockets.get(targetId);
+    if (sid) {
+      io.to(sid).emit('offer', { from: socket.userId, offer });
+    }
+  });
+
+  socket.on('answer', ({ targetId, answer }) => {
+    const sid = userSockets.get(targetId);
+    if (sid) {
+      io.to(sid).emit('answer', { from: socket.userId, answer });
+    }
+  });
+
+  socket.on('ice-candidate', ({ targetId, candidate }) => {
+    const sid = userSockets.get(targetId);
+    if (sid) {
+      io.to(sid).emit('ice-candidate', { from: socket.userId, candidate });
+    }
+  });
+
+  // Отключение
+  socket.on('disconnect', () => {
+    console.log('[socket] disconnect', socket.id, socket.userId);
+    if (socket.userId) {
+      userSockets.delete(socket.userId);
+      users.delete(socket.id);
+      broadcastUserList();
+    }
+  });
+});
+
+function broadcastUserList() {
+  const list = Array.from(userSockets.entries()).map(([userId, socketId]) => ({
+    userId,
+    username: users.get(socketId)?.username || 'Unknown',
+    status: users.get(socketId)?.status || 'online'
+  }));
+  io.emit('user-list', list);
+}
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 CraneCall server (only personal calls) running on port ${PORT}`);
+});
