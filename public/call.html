@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>CraneCall — Звонок</title>
+  <title>CraneCall — Активный звонок</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <style>
@@ -298,6 +298,7 @@
     .ctrl-btn.off .ctrl-label { color: #ff4757; }
     .ctrl-btn.end-call .ctrl-icon { background: #ff4757; box-shadow: 0 2px 8px rgba(255,71,87,0.4); }
 
+    /* Secondary buttons */
     .sec-btn {
       display: flex;
       align-items: center;
@@ -649,6 +650,7 @@
         callStatusEl.textContent = 'Ожидание допуска...';
         remoteSubBig.textContent = 'Ожидание допуска от организатора';
       }
+
       socket.on('admitted-to-group', async ({ groupId: gid, hostId, participants: parts, chat }) => {
         isHost = (hostId === currentUser.userId);
         showToast('Вы вошли в конференцию');
@@ -660,6 +662,7 @@
           if (p.userId !== currentUser.userId) await createGroupOffer(p.userId);
         }
       });
+
       socket.on('waiting-for-admission', () => { callStatusEl.textContent = 'Ждём разрешения...'; });
       socket.on('rejected-from-group', () => { showToast('Вас не пустили в конференцию', true); setTimeout(() => window.close(), 2000); });
       socket.on('waiting-list-update', ({ waiting }) => { if (isHost) renderWaitingList(waiting); });
