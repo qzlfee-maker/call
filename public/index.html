@@ -286,287 +286,33 @@
             font-weight: 500;
         }
 
-        /* ========== ВСТРОЕННЫЙ ИНТЕРФЕЙС ЗВОНКА ========== */
-        .call-overlay {
+        /* Уведомления */
+        .notification {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 15, 24, 0.96);
-            backdrop-filter: blur(20px);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            transition: opacity 0.3s ease;
-        }
-        .incoming-card, .outgoing-card {
+            top: 70px;
+            left: 20px;
+            right: 20px;
             background: #1a1a2e;
-            border-radius: 40px;
-            padding: 40px;
+            border-left: 4px solid #7a5cff;
+            border-radius: 16px;
+            padding: 12px 16px;
             text-align: center;
-            width: 90%;
-            max-width: 360px;
-            border: 1px solid #7a5cff;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        }
-        .avatar-large {
-            width: 120px;
-            height: 120px;
-            background: linear-gradient(135deg, #7a5cff, #ff5ad6);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 56px;
-            margin: 0 auto 20px;
-        }
-        .caller-name {
-            font-size: 28px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        .call-status-text {
-            font-size: 16px;
-            color: #8b949e;
-            margin-bottom: 32px;
-        }
-        .call-buttons {
-            display: flex;
-            gap: 24px;
-            justify-content: center;
-        }
-        .call-btn {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .call-btn:active { transform: scale(0.94); }
-        .accept-btn { background: #00e676; color: white; animation: pulse 1.5s infinite; }
-        .decline-btn { background: #ff5252; color: white; }
-        .cancel-btn { background: #ff5252; width: 80px; border-radius: 40px; font-size: 18px; }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(0,230,118,0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(0,230,118,0); }
-            100% { box-shadow: 0 0 0 0 rgba(0,230,118,0); }
-        }
-
-        /* Активный звонок */
-        .active-call-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-        }
-        .video-wrapper {
-            flex: 1;
-            position: relative;
-            background: #000;
-            overflow: hidden;
-        }
-        .remote-video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .local-video {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 150px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 12px;
-            border: 2px solid #7a5cff;
-            cursor: pointer;
-            z-index: 20;
-            background: #0f0f18;
-        }
-        .avatar-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 180px;
-            height: 180px;
-            background: linear-gradient(135deg, #7a5cff, #ff5ad6);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 72px;
-            z-index: 15;
-        }
-        .call-overlay-ui {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
-            padding: 30px 20px 40px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-            transition: opacity 0.3s;
-            z-index: 10;
-        }
-        .caller-info {
-            text-align: center;
-        }
-        .caller-name-large {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-        .call-duration {
-            font-size: 14px;
-            color: #8b949e;
-            font-family: monospace;
-        }
-        .main-end-call {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: #ff5252;
-            border: none;
-            color: white;
-            font-size: 36px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .main-end-call:active { transform: scale(0.94); }
-        .secondary-controls {
-            display: flex;
-            justify-content: center;
-            gap: 24px;
-            flex-wrap: wrap;
-        }
-        .control-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(8px);
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .control-icon:active { transform: scale(0.94); }
-        .control-icon.active { background: #7a5cff; }
-        .control-icon.inactive { background: rgba(255, 255, 255, 0.2); opacity: 0.6; }
-        .call-overlay-ui.auto-hide {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        /* Плавающее окно (свёрнутый звонок) */
-        .floating-call {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 260px;
-            background: #1a1a2e;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            cursor: grab;
-            border: 1px solid #7a5cff;
-        }
-        .floating-video {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            background: #000;
-        }
-        .floating-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            background: rgba(26, 26, 46, 0.9);
-            backdrop-filter: blur(4px);
-        }
-        .floating-name { font-size: 14px; font-weight: 500; }
-        .floating-timer { font-size: 12px; font-family: monospace; }
-        .floating-controls { display: flex; gap: 8px; }
-        .floating-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-        }
-        .floating-btn:active { background: rgba(255,255,255,0.2); }
-
-        /* Настройки */
-        .settings-panel {
-            position: fixed;
-            bottom: 100px;
-            right: 20px;
-            width: 280px;
-            background: #1a1a2e;
-            border-radius: 24px;
-            padding: 16px;
-            z-index: 200;
-            border: 1px solid #7a5cff;
-            display: none;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .settings-panel.open { display: flex; }
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        select {
-            background: #2a2a3a;
-            border: 1px solid #7a5cff;
-            padding: 6px 12px;
-            border-radius: 20px;
-            color: white;
-        }
-        .notification-toast {
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ff5252;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 40px;
             font-size: 14px;
             z-index: 1000;
-            animation: fadeOut 3s forwards;
+            animation: slideDown 0.3s ease;
         }
-        @keyframes fadeOut {
-            0% { opacity: 1; }
-            80% { opacity: 1; }
-            100% { opacity: 0; visibility: hidden; }
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
-        .hidden { display: none; }
 
         /* Мобильная адаптация */
         @media (max-width: 768px) {
-            .mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
             .logo span { display: none; }
             .user-name { display: none; }
             .contacts-sidebar, .groups-list {
@@ -581,14 +327,17 @@
                 background: #0f0f18;
                 border-right: 1px solid #7a5cff;
             }
-            .contacts-sidebar.open, .groups-list.open { transform: translateX(0); }
-            .call-icon { width: 44px; height: 44px; font-size: 22px; }
-            .main-end-call { width: 70px; height: 70px; font-size: 32px; }
-            .control-icon { width: 50px; height: 50px; font-size: 22px; }
-            .local-video { width: 120px; height: 80px; }
-            .floating-call { width: 220px; }
-            .floating-video { height: 125px; }
+            .contacts-sidebar.open, .groups-list.open {
+                transform: translateX(0);
+            }
+            .call-icon {
+                width: 44px;
+                height: 44px;
+                font-size: 22px;
+            }
         }
+
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -607,94 +356,44 @@
 <div id="appContainer" class="app-container hidden">
     <div class="telegram-header">
         <button class="mobile-menu-btn" id="menuBtn">☰</button>
-        <div class="logo"><div class="logo-icon">📞</div><span>Craheapp</span></div>
-        <div class="user-info"><span class="user-name" id="currentUserName"></span><div class="avatar" id="userAvatar"></div></div>
+        <div class="logo">
+            <div class="logo-icon">📞</div>
+            <span>Craheapp</span>
+        </div>
+        <div class="user-info">
+            <span class="user-name" id="currentUserName"></span>
+            <div class="avatar" id="userAvatar"></div>
+        </div>
     </div>
+
     <div class="tabs">
         <div class="tab active" data-tab="contacts">Контакты</div>
         <div class="tab" data-tab="groups">Групповые звонки</div>
     </div>
+
     <div class="tab-content active" id="tab-contacts">
-        <div class="contacts-sidebar"><div class="contacts-header">Контакты онлайн</div><div class="contacts-list" id="contactsList"></div></div>
+        <div class="contacts-sidebar">
+            <div class="contacts-header">Контакты онлайн</div>
+            <div class="contacts-list" id="contactsList"></div>
+        </div>
     </div>
     <div class="tab-content" id="tab-groups">
-        <div class="create-group"><input type="text" id="groupNameInput" placeholder="Название конференции"><button id="createGroupBtn">Создать</button></div>
+        <div class="create-group">
+            <input type="text" id="groupNameInput" placeholder="Название конференции">
+            <button id="createGroupBtn">Создать</button>
+        </div>
         <div class="groups-list" id="groupsList"></div>
     </div>
 </div>
 
-<div id="contactsOverlay" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 399;"></div>
-
-<!-- Встроенные оверлеи звонка -->
-<div id="callOverlay" class="call-overlay hidden">
-    <div id="incomingCard" class="incoming-card">
-        <div class="avatar-large" id="callerAvatar">👤</div>
-        <div class="caller-name" id="callerName"></div>
-        <div class="call-status-text" id="callStatusText">Видеозвонок</div>
-        <div class="call-buttons">
-            <button class="call-btn accept-btn" id="acceptCallBtn">📞</button>
-            <button class="call-btn decline-btn" id="declineCallBtn">✖</button>
-            <button class="call-btn cancel-btn hidden" id="cancelCallBtn">Отменить</button>
-        </div>
-    </div>
-</div>
-
-<div id="activeCallContainer" class="active-call-container hidden">
-    <div class="video-wrapper">
-        <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
-        <video id="localVideo" class="local-video" autoplay playsinline muted></video>
-        <div id="avatarCenter" class="avatar-center hidden">👤</div>
-    </div>
-    <div class="call-overlay-ui" id="callControlsOverlay">
-        <div class="caller-info"><div class="caller-name-large" id="activeCallerName"></div><div class="call-duration" id="callDuration">00:00</div></div>
-        <button class="main-end-call" id="endCallMainBtn">📞</button>
-        <div class="secondary-controls">
-            <button class="control-icon" id="camBtn">📹</button>
-            <button class="control-icon" id="micBtn">🎤</button>
-            <button class="control-icon" id="screenShareBtn">🖥️</button>
-            <button class="control-icon" id="switchCamBtn">🔄</button>
-            <button class="control-icon" id="fullscreenBtn">⤢</button>
-            <button class="control-icon" id="minimizeCallBtn">🗗</button>
-            <button class="control-icon" id="settingsCallBtn">⚙️</button>
-        </div>
-    </div>
-</div>
-
-<div id="floatingCall" class="floating-call hidden">
-    <video id="floatingVideo" class="floating-video" autoplay playsinline></video>
-    <div class="floating-info">
-        <span class="floating-name" id="floatingName"></span>
-        <span class="floating-timer" id="floatingTimer">00:00</span>
-        <div class="floating-controls">
-            <button class="floating-btn" id="floatMute">🎤</button>
-            <button class="floating-btn" id="floatEnd">📞</button>
-            <button class="floating-btn" id="floatExpand">🗖</button>
-        </div>
-    </div>
-</div>
-
-<div id="settingsPanel" class="settings-panel"></div>
+<div id="contactsOverlay" class="hidden" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 399;"></div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+    // ========== Глобальные переменные ==========
     let socket = null;
     let currentUser = null;
-    let callState = 'idle'; // idle, calling, ringing, connecting, active, ended, minimized
-    let currentCall = null; // { targetId, targetName, isIncoming, callType }
-    let peerConnection = null;
-    let localStream = null;
-    let remoteStream = null;
-    let screenShareStream = null;
-    let isScreenSharing = false;
-    let callTimerInterval = null;
-    let callStartTime = 0;
-    let isMuted = false;
-    let isVideoOff = false;
-    let usingFrontCamera = true;
-    let floatingWindow = null;
-    let controlsAutoHideTimeout = null;
-    let ringtoneInterval = null;
+    let activeCallWindow = null; // ссылка на окно звонка
 
     // DOM элементы
     const authContainer = document.getElementById('authContainer');
@@ -706,426 +405,244 @@
     const contactsOverlay = document.getElementById('contactsOverlay');
     const tabBtns = document.querySelectorAll('.tab');
     const tabContents = document.querySelectorAll('.tab-content');
-    // Call elements
-    const callOverlay = document.getElementById('callOverlay');
-    const incomingCard = document.getElementById('incomingCard');
-    const callerAvatar = document.getElementById('callerAvatar');
-    const callerNameSpan = document.getElementById('callerName');
-    const callStatusTextSpan = document.getElementById('callStatusText');
-    const acceptBtn = document.getElementById('acceptCallBtn');
-    const declineBtn = document.getElementById('declineCallBtn');
-    const cancelBtn = document.getElementById('cancelCallBtn');
-    const activeCallContainer = document.getElementById('activeCallContainer');
-    const remoteVideo = document.getElementById('remoteVideo');
-    const localVideo = document.getElementById('localVideo');
-    const avatarCenter = document.getElementById('avatarCenter');
-    const activeCallerName = document.getElementById('activeCallerName');
-    const callDurationSpan = document.getElementById('callDuration');
-    const endCallMainBtn = document.getElementById('endCallMainBtn');
-    const camBtn = document.getElementById('camBtn');
-    const micBtn = document.getElementById('micBtn');
-    const screenShareBtn = document.getElementById('screenShareBtn');
-    const switchCamBtn = document.getElementById('switchCamBtn');
-    const fullscreenBtn = document.getElementById('fullscreenBtn');
-    const minimizeCallBtn = document.getElementById('minimizeCallBtn');
-    const settingsCallBtn = document.getElementById('settingsCallBtn');
-    const floatingCallDiv = document.getElementById('floatingCall');
-    const floatingVideo = document.getElementById('floatingVideo');
-    const floatingName = document.getElementById('floatingName');
-    const floatingTimer = document.getElementById('floatingTimer');
-    const floatMute = document.getElementById('floatMute');
-    const floatEnd = document.getElementById('floatEnd');
-    const floatExpand = document.getElementById('floatExpand');
 
-    // Helper
+    // Вспомогательные функции
     function showNotification(msg, isError = false) {
-        const toast = document.createElement('div');
-        toast.className = 'notification-toast';
-        toast.style.background = isError ? '#ff5252' : '#7a5cff';
-        toast.innerText = msg;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
+        const n = document.createElement('div');
+        n.className = 'notification';
+        n.style.borderLeftColor = isError ? '#ff5252' : '#7a5cff';
+        n.textContent = msg;
+        document.body.appendChild(n);
+        setTimeout(() => n.remove(), 3000);
     }
 
-    function formatDuration(seconds) {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    function closeMobileMenu() {
+        document.querySelectorAll('.contacts-sidebar, .groups-list').forEach(el => el.classList.remove('open'));
+        contactsOverlay.classList.add('hidden');
     }
-
-    function updateCallTimer() {
-        if (callState !== 'active') return;
-        const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
-        if (callDurationSpan) callDurationSpan.innerText = formatDuration(elapsed);
-        if (floatingTimer) floatingTimer.innerText = formatDuration(elapsed);
-    }
-
-    function startTimer() {
-        if (callTimerInterval) clearInterval(callTimerInterval);
-        callStartTime = Date.now();
-        callTimerInterval = setInterval(updateCallTimer, 1000);
-    }
-
-    function stopTimer() {
-        if (callTimerInterval) clearInterval(callTimerInterval);
-        callTimerInterval = null;
-    }
-
-    function playRingtone() {
-        try {
-            ringtoneInterval = setInterval(() => {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.frequency.value = 440;
-                gain.gain.value = 0.3;
-                osc.start();
-                gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
-                osc.stop(ctx.currentTime + 0.5);
-            }, 1500);
-        } catch(e) { console.warn('Ringtone not supported'); }
-    }
-
-    function stopRingtone() {
-        if (ringtoneInterval) { clearInterval(ringtoneInterval); ringtoneInterval = null; }
-    }
-
-    function vibrate() { if (navigator.vibrate) navigator.vibrate(200); }
-
-    // ========== MEDIA ==========
-    async function initLocalStream() {
-        if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-        const constraints = { audio: true, video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } } };
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            localStream = stream;
-            return stream;
-        } catch(err) {
-            showNotification('Нет доступа к микрофону/камере', true);
-            throw err;
+    function openMobileMenu() {
+        if (window.innerWidth <= 768) {
+            const activeTab = document.querySelector('.tab.active').dataset.tab;
+            const target = activeTab === 'contacts' ? document.querySelector('#tab-contacts .contacts-sidebar') : document.querySelector('#tab-groups .groups-list');
+            if (target) target.classList.add('open');
+            contactsOverlay.classList.remove('hidden');
         }
     }
+    menuBtn?.addEventListener('click', openMobileMenu);
+    contactsOverlay.addEventListener('click', closeMobileMenu);
+    window.addEventListener('resize', () => { if (window.innerWidth > 768) closeMobileMenu(); });
 
-    // ========== WEBRTC ==========
-    async function createPeerConnection(targetId) {
-        const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] });
-        if (localStream) localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-        pc.onicecandidate = event => { if (event.candidate) socket.emit('call:signal', { targetId, candidate: event.candidate }); };
-        pc.ontrack = event => {
-            remoteStream = event.streams[0];
-            if (remoteVideo) remoteVideo.srcObject = remoteStream;
-            if (callState === 'connecting') { callState = 'active'; startTimer(); }
-        };
-        return pc;
-    }
+    // Переключение вкладок
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.dataset.tab;
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            tabContents.forEach(tc => tc.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            closeMobileMenu();
+            if (tabId === 'groups') loadGroups();
+        });
+    });
 
-    async function startCall(targetId) {
-        try {
-            await initLocalStream();
-            peerConnection = await createPeerConnection(targetId);
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-            socket.emit('call:signal', { targetId, offer });
-            callState = 'calling';
-        } catch(err) { endCall(); }
-    }
-
-    async function handleOffer(data) {
-        if (!peerConnection) {
-            await initLocalStream();
-            peerConnection = await createPeerConnection(data.from);
-        }
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        socket.emit('call:signal', { targetId: data.from, answer });
-        callState = 'connecting';
-    }
-
-    async function handleAnswer(data) {
-        if (peerConnection) { await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer)); callState = 'active'; startTimer(); }
-    }
-
-    async function handleIceCandidate(data) {
-        if (peerConnection) { try { await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch(e) {} }
-    }
-
-    // ========== SCREEN SHARE ==========
-    async function toggleScreenShare() {
-        if (!localStream) return;
-        if (isScreenSharing) {
-            if (screenShareStream) screenShareStream.getTracks().forEach(t => t.stop());
-            screenShareStream = null;
-            const newStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            const oldVideoTrack = localStream.getVideoTracks()[0];
-            const newVideoTrack = newStream.getVideoTracks()[0];
-            localStream.removeTrack(oldVideoTrack);
-            localStream.addTrack(newVideoTrack);
-            if (peerConnection) {
-                const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
-                if (sender) sender.replaceTrack(newVideoTrack);
-            }
-            if (localVideo) localVideo.srcObject = localStream;
-            isScreenSharing = false;
-            screenShareBtn.classList.remove('active');
+    // Регистрация
+    registerBtn.addEventListener('click', async () => {
+        const username = document.getElementById('regUsername').value.trim();
+        const userId = document.getElementById('regUserId').value.trim();
+        if (!username || !userId) return showNotification('Заполните все поля', true);
+        currentUser = { id: userId, name: username };
+        const resp = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, userId })
+        });
+        if (resp.ok) {
+            localStorage.setItem('craheapp_user', JSON.stringify(currentUser));
+            socket = io({ transports: ['websocket', 'polling'] });
+            socket.on('connect', () => {
+                socket.emit('register', { userId, username });
+            });
+            setupSocketListeners();
+            authContainer.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+            document.getElementById('currentUserName').textContent = username;
+            document.getElementById('userAvatar').textContent = username[0].toUpperCase();
         } else {
-            try {
-                screenShareStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                const videoTrack = screenShareStream.getVideoTracks()[0];
-                const oldVideoTrack = localStream.getVideoTracks()[0];
-                localStream.removeTrack(oldVideoTrack);
-                localStream.addTrack(videoTrack);
-                if (peerConnection) {
-                    const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
-                    if (sender) sender.replaceTrack(videoTrack);
-                }
-                if (localVideo) localVideo.srcObject = localStream;
-                isScreenSharing = true;
-                screenShareBtn.classList.add('active');
-                videoTrack.onended = () => toggleScreenShare();
-            } catch(err) { showNotification('Демонстрация экрана отменена'); }
+            showNotification('Ошибка регистрации', true);
         }
-    }
+    });
 
-    // ========== UI CONTROLS ==========
-    function toggleMute() {
-        if (!localStream) return;
-        isMuted = !isMuted;
-        localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
-        micBtn.classList.toggle('inactive', isMuted);
-        if (floatMute) floatMute.style.opacity = isMuted ? '0.5' : '1';
-        if (currentCall?.targetId) socket.emit('call:mute', { targetId: currentCall.targetId, muted: isMuted });
-    }
-    function toggleVideo() {
-        if (!localStream) return;
-        isVideoOff = !isVideoOff;
-        localStream.getVideoTracks().forEach(t => t.enabled = !isVideoOff);
-        camBtn.classList.toggle('inactive', isVideoOff);
-        if (isVideoOff) { localVideo.style.display = 'none'; avatarCenter.classList.remove('hidden'); avatarCenter.innerText = currentCall?.targetName?.[0] || '👤'; }
-        else { localVideo.style.display = 'block'; avatarCenter.classList.add('hidden'); }
-        if (currentCall?.targetId) socket.emit('call:video', { targetId: currentCall.targetId, enabled: !isVideoOff });
-    }
-    async function switchCamera() {
-        if (!localStream) return;
-        try {
-            const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: usingFrontCamera ? 'environment' : 'user' }, audio: true });
-            const newVideoTrack = newStream.getVideoTracks()[0];
-            const oldVideoTrack = localStream.getVideoTracks()[0];
-            localStream.removeTrack(oldVideoTrack);
-            localStream.addTrack(newVideoTrack);
-            oldVideoTrack.stop();
-            if (peerConnection) {
-                const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
-                if (sender) sender.replaceTrack(newVideoTrack);
-            }
-            localVideo.srcObject = localStream;
-            usingFrontCamera = !usingFrontCamera;
-        } catch(err) { showNotification('Не удалось переключить камеру', true); }
-    }
-    function toggleFullscreen() {
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-        else document.exitFullscreen();
-    }
-    function minimizeCall() {
-        if (callState !== 'active') return;
-        callState = 'minimized';
-        activeCallContainer.classList.add('hidden');
-        floatingCallDiv.classList.remove('hidden');
-        floatingVideo.srcObject = remoteVideo.srcObject;
-        floatingName.innerText = currentCall.targetName;
-        floatingTimer.innerText = callDurationSpan.innerText;
-    }
-    function expandCall() {
-        if (callState !== 'minimized') return;
-        callState = 'active';
-        floatingCallDiv.classList.add('hidden');
-        activeCallContainer.classList.remove('hidden');
-        remoteVideo.srcObject = floatingVideo.srcObject;
-    }
-    function endCall() {
-        stopRingtone();
-        if (peerConnection) peerConnection.close();
-        if (localStream) localStream.getTracks().forEach(t => t.stop());
-        if (screenShareStream) screenShareStream.getTracks().forEach(t => t.stop());
-        if (callTimerInterval) clearInterval(callTimerInterval);
-        if (currentCall?.targetId) socket.emit('call:end', { targetId: currentCall.targetId });
-        callState = 'idle';
-        currentCall = null;
-        activeCallContainer.classList.add('hidden');
-        callOverlay.classList.add('hidden');
-        floatingCallDiv.classList.add('hidden');
-        showNotification('Звонок завершён');
-    }
-
-    function showActiveCallUI() {
-        activeCallerName.innerText = currentCall.targetName;
-        avatarCenter.innerText = currentCall.targetName[0].toUpperCase();
-        localVideo.srcObject = localStream;
-        activeCallContainer.classList.remove('hidden');
-        callOverlay.classList.add('hidden');
-        callState = 'active';
-        startTimer();
-        // auto-hide controls
-        const overlayUI = document.getElementById('callControlsOverlay');
-        function resetAutoHide() {
-            if (controlsAutoHideTimeout) clearTimeout(controlsAutoHideTimeout);
-            overlayUI.classList.remove('auto-hide');
-            controlsAutoHideTimeout = setTimeout(() => { if (callState === 'active') overlayUI.classList.add('auto-hide'); }, 3000);
-        }
-        overlayUI.addEventListener('mousemove', resetAutoHide);
-        resetAutoHide();
-        remoteVideo.addEventListener('dblclick', toggleFullscreen);
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen(); });
-    }
-
-    function showIncomingScreen(callerName, targetId) {
-        callerAvatar.innerText = callerName[0].toUpperCase();
-        callerNameSpan.innerText = callerName;
-        callStatusTextSpan.innerText = 'Видеозвонок';
-        acceptBtn.onclick = async () => {
-            callOverlay.classList.add('hidden');
-            stopRingtone();
-            currentCall = { targetId, targetName: callerName, isIncoming: true, callType: 'video' };
-            callState = 'connecting';
-            socket.emit('call:accept', { fromId: targetId });
-            try {
-                await initLocalStream();
-                showActiveCallUI();
-            } catch(err) { endCall(); }
-        };
-        declineBtn.onclick = () => {
-            callOverlay.classList.add('hidden');
-            stopRingtone();
-            socket.emit('call:reject', { fromId: targetId });
-        };
-        callOverlay.classList.remove('hidden');
-        vibrate();
-        playRingtone();
-    }
-
-    function showOutgoingScreen(targetName, targetId) {
-        callerAvatar.innerText = targetName[0].toUpperCase();
-        callerNameSpan.innerText = targetName;
-        callStatusTextSpan.innerText = 'Вызов...';
-        acceptBtn.classList.add('hidden');
-        declineBtn.classList.add('hidden');
-        cancelBtn.classList.remove('hidden');
-        cancelBtn.onclick = () => {
-            callOverlay.classList.add('hidden');
-            endCall();
-        };
-        callOverlay.classList.remove('hidden');
-        // start call after UI shown
-        startCall(targetId);
-    }
-
-    // ========== SOCKET LISTENERS ==========
+    // Настройка сокетов
     function setupSocketListeners() {
-        socket.on('user-list', (users) => renderContacts(users.filter(u => u.userId !== currentUser.id)));
-        socket.on('group-list', (groups) => renderGroups(groups));
+        socket.on('user-list', (users) => {
+            renderContacts(users.filter(u => u.userId !== currentUser.id));
+        });
+        socket.on('group-list', (groups) => {
+            renderGroups(groups);
+        });
         socket.on('incoming-call', (data) => {
-            if (callState !== 'idle') { socket.emit('call:reject', { fromId: data.from }); return; }
-            currentCall = { targetId: data.from, targetName: data.fromName, isIncoming: true, callType: 'video' };
-            showIncomingScreen(data.fromName, data.from);
+            // Проверяем, нет ли уже активного звонка (окно звонка открыто)
+            if (activeCallWindow && !activeCallWindow.closed) {
+                socket.emit('call:reject', { fromId: data.from });
+                return;
+            }
+            showNotification(`Входящий видеозвонок от ${data.fromName}`, false);
+            localStorage.setItem('craheapp_call', JSON.stringify({
+                type: 'personal',
+                targetId: data.from,
+                targetName: data.fromName,
+                isVideo: true,
+                isIncoming: true,
+                myUserId: currentUser.id,
+                myUsername: currentUser.name
+            }));
+            activeCallWindow = window.open('/call.html', '_blank');
+            // Сброс, если окно закрыто
+            const checkClosed = setInterval(() => {
+                if (activeCallWindow && activeCallWindow.closed) {
+                    clearInterval(checkClosed);
+                    activeCallWindow = null;
+                }
+            }, 500);
         });
-        socket.on('call:accepted', () => {
-            if (callState === 'calling') { callState = 'connecting'; /* wait for offer */ }
+        socket.on('group-created', (data) => {
+            loadGroups();
+            showNotification(`Группа "${data.groupName}" создана`);
         });
-        socket.on('call:rejected', () => { if (callState === 'calling') { endCall(); showNotification('Звонок отклонён', true); } });
-        socket.on('call:ended', () => { endCall(); showNotification('Звонок завершён'); });
-        socket.on('offer', async (data) => { if (callState === 'ringing' || callState === 'connecting') await handleOffer(data); });
-        socket.on('answer', async (data) => { await handleAnswer(data); });
-        socket.on('ice-candidate', async (data) => { await handleIceCandidate(data); });
-        socket.on('call:mute', (data) => {});
-        socket.on('call:video', (data) => {});
-        socket.on('call:error', (data) => { showNotification(data.message, true); endCall(); });
-        socket.on('group-created', (data) => { loadGroups(); showNotification(`Группа "${data.groupName}" создана`); });
-        socket.on('admitted-to-group', (data) => { showNotification(`Вас пустили в группу "${data.groupName}"`); });
-        socket.on('rejected-from-group', () => { showNotification('Вас не пустили в группу', true); });
+        socket.on('admitted-to-group', (data) => {
+            showNotification(`Вас пустили в группу "${data.groupName}"`);
+        });
+        socket.on('rejected-from-group', () => {
+            showNotification('Вас не пустили в группу', true);
+        });
     }
 
-    // ========== UI RENDERING ==========
+    // Рендер контактов (только видеозвонки)
     function renderContacts(users) {
-        if (!users.length) { contactsList.innerHTML = '<div style="padding:20px;text-align:center;color:#8b949e;">Нет пользователей онлайн</div>'; return; }
+        if (!users.length) {
+            contactsList.innerHTML = '<div style="padding:20px;text-align:center;color:#8b949e;">Нет пользователей онлайн</div>';
+            return;
+        }
         contactsList.innerHTML = users.map(u => `
-            <div class="contact-item">
+            <div class="contact-item" data-user-id="${u.userId}">
                 <div class="contact-avatar">${escapeHtml(u.username[0].toUpperCase())}</div>
-                <div class="contact-info"><div class="contact-name">${escapeHtml(u.username)}</div><div class="contact-status">● Онлайн</div></div>
-                <div class="call-buttons"><button class="call-icon" onclick="startVideoCall('${u.userId}', '${escapeHtml(u.username)}')">📹</button></div>
+                <div class="contact-info">
+                    <div class="contact-name">${escapeHtml(u.username)}</div>
+                    <div class="contact-status">● Онлайн</div>
+                </div>
+                <div class="call-buttons">
+                    <button class="call-icon" onclick="startVideoCall('${u.userId}', '${escapeHtml(u.username)}')">📹</button>
+                </div>
             </div>
         `).join('');
     }
+
+    // Начать видеозвонок
     window.startVideoCall = (targetId, targetName) => {
-        if (callState !== 'idle') { showNotification('Уже есть активный звонок', true); return; }
-        currentCall = { targetId, targetName, isIncoming: false, callType: 'video' };
-        showOutgoingScreen(targetName, targetId);
+        // Нельзя звонить самому себе
+        if (targetId === currentUser.id) {
+            showNotification('Нельзя позвонить самому себе', true);
+            return;
+        }
+        // Проверяем, не открыто ли уже окно звонка
+        if (activeCallWindow && !activeCallWindow.closed) {
+            showNotification('Уже есть активный звонок', true);
+            return;
+        }
+        localStorage.setItem('craheapp_call', JSON.stringify({
+            type: 'personal',
+            targetId: targetId,
+            targetName: targetName,
+            isVideo: true,
+            isIncoming: false,
+            myUserId: currentUser.id,
+            myUsername: currentUser.name
+        }));
+        activeCallWindow = window.open('/call.html', '_blank');
         socket.emit('call:start', { targetId, callType: 'video' });
+        // Следим за закрытием окна
+        const checkClosed = setInterval(() => {
+            if (activeCallWindow && activeCallWindow.closed) {
+                clearInterval(checkClosed);
+                activeCallWindow = null;
+                // Если звонок не был завершён, отправляем сигнал завершения
+                socket.emit('call:end', { targetId });
+            }
+        }, 500);
     };
+
+    // Рендер групп
     function renderGroups(groups) {
-        if (!groups.length) { groupsList.innerHTML = '<div style="padding:20px;text-align:center;color:#8b949e;">Нет активных конференций</div>'; return; }
+        if (!groups.length) {
+            groupsList.innerHTML = '<div style="padding:20px;text-align:center;color:#8b949e;">Нет активных конференций</div>';
+            return;
+        }
         groupsList.innerHTML = groups.map(g => `
             <div class="group-item">
                 <div class="group-avatar">👥</div>
-                <div class="group-info"><div class="group-name">${escapeHtml(g.name)}</div><div class="contact-status">Участников: ${g.participants}</div></div>
+                <div class="group-info">
+                    <div class="group-name">${escapeHtml(g.name)}</div>
+                    <div class="contact-status">Участников: ${g.participants}</div>
+                </div>
                 <button class="call-icon" onclick="joinGroup('${g.groupId}', '${escapeHtml(g.name)}')">🔊</button>
             </div>
         `).join('');
     }
-    window.joinGroup = (groupId, groupName) => { showNotification('Групповые звонки в разработке', true); };
+
+    // Присоединиться к группе
+    window.joinGroup = (groupId, groupName) => {
+        if (activeCallWindow && !activeCallWindow.closed) {
+            showNotification('Уже есть активный звонок', true);
+            return;
+        }
+        localStorage.setItem('craheapp_call', JSON.stringify({
+            type: 'group',
+            groupId: groupId,
+            groupName: groupName,
+            isIncoming: false,
+            myUserId: currentUser.id,
+            myUsername: currentUser.name
+        }));
+        activeCallWindow = window.open('/call.html', '_blank');
+        socket.emit('join-group-request', { groupId });
+        const checkClosed = setInterval(() => {
+            if (activeCallWindow && activeCallWindow.closed) {
+                clearInterval(checkClosed);
+                activeCallWindow = null;
+                socket.emit('leave-group', { groupId });
+            }
+        }, 500);
+    };
+
+    // Создание группы
     document.getElementById('createGroupBtn').addEventListener('click', () => {
         const name = document.getElementById('groupNameInput').value.trim();
         if (!name) return showNotification('Введите название группы', true);
         socket.emit('create-group', { groupName: name });
         document.getElementById('groupNameInput').value = '';
     });
-    function loadGroups() { socket.emit('get-groups'); }
-    function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;' }[m])); }
 
-    // ========== MOBILE MENU ==========
-    function closeMobileMenu() { document.querySelectorAll('.contacts-sidebar, .groups-list').forEach(el => el.classList.remove('open')); contactsOverlay.classList.add('hidden'); }
-    function openMobileMenu() { if (window.innerWidth <= 768) { const activeTab = document.querySelector('.tab.active').dataset.tab; const target = activeTab === 'contacts' ? document.querySelector('#tab-contacts .contacts-sidebar') : document.querySelector('#tab-groups .groups-list'); if (target) target.classList.add('open'); contactsOverlay.classList.remove('hidden'); } }
-    menuBtn?.addEventListener('click', openMobileMenu);
-    contactsOverlay.addEventListener('click', closeMobileMenu);
-    window.addEventListener('resize', () => { if (window.innerWidth > 768) closeMobileMenu(); });
-    tabBtns.forEach(btn => { btn.addEventListener('click', () => { const tabId = btn.dataset.tab; tabBtns.forEach(b => b.classList.remove('active')); btn.classList.add('active'); tabContents.forEach(tc => tc.classList.remove('active')); document.getElementById(`tab-${tabId}`).classList.add('active'); closeMobileMenu(); if (tabId === 'groups') loadGroups(); }); });
+    // Загрузить список групп
+    function loadGroups() {
+        socket.emit('get-groups');
+    }
 
-    // ========== REGISTRATION ==========
-    registerBtn.addEventListener('click', async () => {
-        const username = document.getElementById('regUsername').value.trim();
-        const userId = document.getElementById('regUserId').value.trim();
-        if (!username || !userId) return showNotification('Заполните все поля', true);
-        currentUser = { id: userId, name: username };
-        const resp = await fetch('/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, userId }) });
-        if (resp.ok) {
-            localStorage.setItem('craheapp_user', JSON.stringify(currentUser));
-            socket = io({ transports: ['websocket', 'polling'] });
-            socket.on('connect', () => { socket.emit('register', { userId, username }); });
-            setupSocketListeners();
-            authContainer.classList.add('hidden');
-            appContainer.classList.remove('hidden');
-            document.getElementById('currentUserName').textContent = username;
-            document.getElementById('userAvatar').textContent = username[0].toUpperCase();
-        } else { showNotification('Ошибка регистрации', true); }
-    });
+    // Экранирование HTML
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+    }
 
-    // Button bindings
-    endCallMainBtn.onclick = endCall;
-    camBtn.onclick = toggleVideo;
-    micBtn.onclick = toggleMute;
-    screenShareBtn.onclick = toggleScreenShare;
-    switchCamBtn.onclick = switchCamera;
-    fullscreenBtn.onclick = toggleFullscreen;
-    minimizeCallBtn.onclick = minimizeCall;
-    settingsCallBtn.onclick = () => { /* settings panel */ };
-    floatMute.onclick = toggleMute;
-    floatEnd.onclick = endCall;
-    floatExpand.onclick = expandCall;
-
-    // Load saved user
+    // Проверка сохранённого пользователя
     const savedUser = localStorage.getItem('craheapp_user');
-    if (savedUser) { try { const u = JSON.parse(savedUser); document.getElementById('regUsername').value = u.name; document.getElementById('regUserId').value = u.id; registerBtn.click(); } catch(e) {} }
+    if (savedUser) {
+        try {
+            const user = JSON.parse(savedUser);
+            document.getElementById('regUsername').value = user.name;
+            document.getElementById('regUserId').value = user.id;
+            registerBtn.click();
+        } catch(e) {}
+    }
 </script>
 </body>
 </html>
