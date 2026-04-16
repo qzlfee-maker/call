@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>TelegramCall - Бесплатные видеозвонки</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        /* Регистрация */
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .auth-card {
+            background: rgba(30, 30, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
+            padding: 40px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .auth-card h1 {
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #2ea6ff, #0088cc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 14px;
+            margin: 12px 0;
+            background: #1a1a2e;
+            border: 1px solid #2ea6ff;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #2ea6ff, #0088cc);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        /* Основной интерфейс */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .telegram-header {
+            background: #1a1a2e;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2ea6ff;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #2ea6ff, #0088cc);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #2ea6ff, #0088cc);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .main-grid {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .contacts-sidebar {
+            width: 320px;
+            background: #0f0f1a;
+            border-right: 1px solid #2ea6ff;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .contacts-header {
+            padding: 16px;
+            border-bottom: 1px solid #2ea6ff;
+            font-weight: 600;
+        }
+
+        .contacts-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .contact-item:hover {
+            background: #1a1a2e;
+        }
+
+        .contact-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #2ea6ff, #0088cc);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .contact-info {
+            flex: 1;
+        }
+
+        .contact-name {
+            font-weight: 600;
+        }
+
+        .call-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .call-icon {
+            background: #2ea6ff;
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .call-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0a0a0a;
+        }
+
+        .call-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #2ea6ff;
+        }
+
+        .video-container {
+            flex: 1;
+            position: relative;
+            background: #000;
+        }
+
+        .remote-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .local-video {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid #2ea6ff;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .call-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background: #1a1a2e;
+        }
+
+        .control-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            transition: transform 0.2s;
+        }
+
+        .control-btn.end-call {
+            background: #dc2626;
+            color: white;
+        }
+
+        .incoming-call {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #1a1a2e;
+            border: 2px solid #2ea6ff;
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            gap: 15px;
+            z-index: 200;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .call-status-text {
+            text-align: center;
+            padding: 40px;
+            color: #8b949e;
+        }
+    </style>
+</head>
+<body>
+<div id="authContainer" class="auth-container">
+    <div class="auth-card">
+        <div class="logo-icon" style="margin: 0 auto 20px; width: 60px; height: 60px; font-size: 30px;">📞</div>
+        <h1>TelegramCall</h1>
+        <p style="color: #8b949e; margin-bottom: 30px;">Бесплатные видеозвонки</p>
+        <input type="text" id="regUsername" class="auth-input" placeholder="Ваше имя">
+        <input type="text" id="regUserId" class="auth-input" placeholder="Ваш ID (например: mama)">
+        <button class="auth-btn" id="registerBtn">Зарегистрироваться</button>
+        <p style="font-size: 12px; color: #8b949e; margin-top: 20px;">Скажите свой ID маме, чтобы она могла вам позвонить!</p>
+    </div>
+</div>
+
+<div id="appContainer" class="app-container hidden">
+    <div class="telegram-header">
+        <div class="logo">
+            <div class="logo-icon">📞</div>
+            <span>TelegramCall</span>
+        </div>
+        <div class="user-info">
+            <span id="currentUserName"></span>
+            <div class="avatar" id="userAvatar"></div>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <div class="contacts-sidebar">
+            <div class="contacts-header">Контакты онлайн</div>
+            <div class="contacts-list" id="contactsList"></div>
+        </div>
+
+        <div class="call-area" id="callArea">
+            <div class="call-header">
+                <h2 id="callWithName">Готов к звонкам</h2>
+            </div>
+            <div id="callContent">
+                <div class="call-status-text">
+                    📞 Выберите контакт и нажмите на звонок<br>
+                    <small style="color: #8b949e;">Бесплатные P2P видеозвонки</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    let socket = null;
+    let currentUser = null;
+    let peerConnection = null;
+    let localStream = null;
+    let currentCall = null;
+    let pendingCall = null;
+
+    // DOM элементы
+    const authContainer = document.getElementById('authContainer');
+    const appContainer = document.getElementById('appContainer');
+    const registerBtn = document.getElementById('registerBtn');
+    const contactsList = document.getElementById('contactsList');
+
+    // Регистрация
+    registerBtn.addEventListener('click', async () => {
+        const username = document.getElementById('regUsername').value.trim();
+        const userId = document.getElementById('regUserId').value.trim();
+        
+        if (!username || !userId) {
+            alert('Заполните все поля');
+            return;
+        }
+        
+        currentUser = { username, userId };
+        
+        // Регистрация на сервере
+        const response = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, userId })
+        });
+        
+        if (response.ok) {
+            // Подключение к WebSocket
+            socket = io();
+            
+            socket.on('connect', () => {
+                socket.emit('register', { username, userId });
+            });
+            
+            setupSocketListeners();
+            
+            authContainer.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+            document.getElementById('currentUserName').textContent = username;
+            document.getElementById('userAvatar').textContent = username[0].toUpperCase();
+        }
+    });
+
+    function setupSocketListeners() {
+        socket.on('user-list', (users) => {
+            renderContacts(users.filter(u => u.userId !== currentUser.userId));
+        });
+        
+        socket.on('incoming-call', (data) => {
+            showIncomingCall(data);
+        });
+        
+        socket.on('call-accepted', async (data) => {
+            document.getElementById('callStatusText').innerHTML = 'Соединение устанавливается...';
+            await startCall(data.targetId, currentCall?.callType);
+        });
+        
+        socket.on('call-rejected', () => {
+            endCall();
+            showNotification('Звонок отклонён');
+        });
+        
+        socket.on('call-ended', () => {
+            endCall();
+            showNotification('Звонок завершён');
+        });
+        
+        socket.on('offer', async (data) => {
+            await handleOffer(data);
+        });
+        
+        socket.on('answer', async (data) => {
+            await handleAnswer(data);
+        });
+        
+        socket.on('ice-candidate', async (data) => {
+            if (peerConnection) {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+            }
+        });
+    }
+
+    async function makeCall(targetId, callType) {
+        currentCall = { targetId, callType };
+        
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({
+                video: callType === 'video',
+                audio: true
+            });
+            
+            peerConnection = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+            
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+            
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('ice-candidate', {
+                        targetId: targetId,
+                        candidate: event.candidate
+                    });
+                }
+            };
+            
+            peerConnection.ontrack = (event) => {
+                const remoteVideo = document.getElementById('remoteVideo');
+                if (remoteVideo && event.streams[0]) {
+                    remoteVideo.srcObject = event.streams[0];
+                }
+            };
+            
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            
+            socket.emit('offer', {
+                targetId: targetId,
+                offer: offer
+            });
+            
+            showCallUI(callType);
+            socket.emit('call-user', { targetId, callType });
+            
+        } catch (error) {
+            console.error('Error starting call:', error);
+            alert('Не удалось начать звонок. Проверьте микрофон и камеру.');
+        }
+    }
+
+    async function handleOffer(data) {
+        if (!peerConnection) {
+            peerConnection = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            });
+            
+            if (localStream) {
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
+            }
+            
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('ice-candidate', {
+                        targetId: data.from,
+                        candidate: event.candidate
+                    });
+                }
+            };
+            
+            peerConnection.ontrack = (event) => {
+                const remoteVideo = document.getElementById('remoteVideo');
+                if (remoteVideo && event.streams[0]) {
+                    remoteVideo.srcObject = event.streams[0];
+                }
+            };
+        }
+        
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        
+        socket.emit('answer', {
+            targetId: data.from,
+            answer: answer
+        });
+    }
+
+    async function handleAnswer(data) {
+        if (peerConnection) {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+        }
+    }
+
+    function showCallUI(callType) {
+        const callContent = document.getElementById('callContent');
+        callContent.innerHTML = `
+            <div class="video-container" id="videoContainer">
+                ${callType === 'video' ? `
+                    <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
+                    <video id="localVideo" class="local-video" autoplay playsinline muted></video>
+                ` : `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 80px;">🎙️</div>
+                            <div>Аудиозвонок в процессе...</div>
+                        </div>
+                    </div>
+                `}
+            </div>
+            <div class="call-controls">
+                <button class="control-btn" id="endCallBtn" style="background: #dc2626;">📞</button>
+            </div>
+        `;
+        
+        if (callType === 'video' && localStream) {
+            document.getElementById('localVideo').srcObject = localStream;
+        }
+        
+        document.getElementById('endCallBtn').onclick = () => {
+            endCall();
+            socket.emit('end-call', { targetId: currentCall?.targetId });
+        };
+    }
+
+    function showIncomingCall(data) {
+        pendingCall = data;
+        const notification = document.createElement('div');
+        notification.className = 'incoming-call';
+        notification.id = 'incomingCall';
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="contact-avatar" style="width: 50px; height: 50px;">${data.fromName[0].toUpperCase()}</div>
+                <div>
+                    <div><strong>${data.fromName}</strong></div>
+                    <div>${data.callType === 'video' ? '📹 Видеозвонок' : '🎙️ Аудиозвонок'}</div>
+                </div>
+                <button id="acceptCallBtn" style="background: #22c55e; border: none; width: 48px; height: 48px; border-radius: 50%; font-size: 24px; cursor: pointer;">✅</button>
+                <button id="rejectCallBtn" style="background: #dc2626; border: none; width: 48px; height: 48px; border-radius: 50%; font-size: 24px; cursor: pointer;">❌</button>
+            </div>
+        `;
+        document.body.appendChild(notification);
+        
+        document.getElementById('acceptCallBtn').onclick = async () => {
+            notification.remove();
+            currentCall = { targetId: data.from, callType: data.callType };
+            
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: data.callType === 'video',
+                    audio: true
+                });
+                
+                showCallUI(data.callType);
+                socket.emit('accept-call', { fromId: data.from });
+            } catch (error) {
+                console.error(error);
+                alert('Не удалось получить доступ к камере/микрофону');
+            }
+        };
+        
+        document.getElementById('rejectCallBtn').onclick = () => {
+            notification.remove();
+            socket.emit('reject-call', { fromId: data.from });
+        };
+    }
+
+    function endCall() {
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+        currentCall = null;
+        
+        const callContent = document.getElementById('callContent');
+        callContent.innerHTML = `
+            <div class="call-status-text">
+                📞 Звонок завершён<br>
+                <small style="color: #8b949e;">Выберите контакт для нового звонка</small>
+            </div>
+        `;
+    }
+
+    function renderContacts(users) {
+        if (users.length === 0) {
+            contactsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #8b949e;">Нет пользователей онлайн</div>';
+            return;
+        }
+        
+        contactsList.innerHTML = users.map(user => `
+            <div class="contact-item">
+                <div class="contact-avatar">${user.username[0].toUpperCase()}</div>
+                <div class="contact-info">
+                    <div class="contact-name">${user.username}</div>
+                    <div style="font-size: 12px; color: #2ea6ff;">● Онлайн</div>
+                </div>
+                <div class="call-buttons">
+                    <button class="call-icon" onclick="makeCall('${user.userId}', 'audio')">🎙️</button>
+                    <button class="call-icon" onclick="makeCall('${user.userId}', 'video')">📹</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #1a1a2e;
+            border-left: 4px solid #2ea6ff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+    }
+
+    window.makeCall = makeCall;
+</script>
+</body>
+</html>
